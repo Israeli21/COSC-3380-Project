@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { testConnection, testDatabase } from './services/api';
 
 function App() {
-  const [backendStatus, setBackendStatus] = useState('⏳ Checking...');
-  const [dbStatus, setDbStatus] = useState('⏳ Checking...');
+  const [backendStatus, setBackendStatus] = useState('Checking...');
+  const [dbStatus, setDbStatus] = useState('Checking...');
   const [activeTab, setActiveTab] = useState('status');
   const [queryResults, setQueryResults] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -169,7 +169,7 @@ function App() {
                 
                 <div className="space-y-4">
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-yellow-900 mb-2">⚠️ Step 1: Initialize Schema</h3>
+                    <h3 className="font-semibold text-yellow-900 mb-2">Step 1: Initialize Schema</h3>
                     <p className="text-sm text-yellow-800 mb-3">
                       This will DROP all existing tables and recreate them. All data will be lost!
                     </p>
@@ -178,12 +178,12 @@ function App() {
                       disabled={loading}
                       className="w-full bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 disabled:bg-gray-400 transition-colors"
                     >
-                      {loading ? '⏳ Processing...' : '🔧 Initialize Database'}
+                      {loading ? 'Processing...' : 'Initialize Database'}
                     </button>
                   </div>
 
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-green-900 mb-2">✅ Step 2: Insert Test Data</h3>
+                    <h3 className="font-semibold text-green-900 mb-2">Step 2: Insert Test Data</h3>
                     <p className="text-sm text-green-800 mb-3">
                       Populate tables with sample users, drivers, locations, and more.
                     </p>
@@ -192,7 +192,7 @@ function App() {
                       disabled={loading}
                       className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400 transition-colors"
                     >
-                      {loading ? '⏳ Processing...' : '📝 Insert Test Data'}
+                      {loading ? 'Processing...' : 'Insert Test Data'}
                     </button>
                   </div>
                 </div>
@@ -234,26 +234,26 @@ function App() {
               <div>
                 <h2 className="text-2xl font-semibold mb-4">Database Queries</h2>
                 <p className="text-gray-600 mb-6">
-                  Run queries with JOINs to view database information (Phase 1 requirement)
+                  Run queries with JOINs to view database information
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <button
                     onClick={() => handleRunQuery('ride-history')}
                     disabled={loading}
-                    className="p-4 bg-purple-100 border border-purple-300 rounded-lg hover:bg-purple-200 disabled:bg-gray-200 transition-colors text-left"
+                    className="p-4 bg-blue-100 border border-blue-300 rounded-lg hover:bg-blue-200 disabled:bg-gray-200 transition-colors text-left"
                   >
-                    <h3 className="font-semibold text-purple-900">📋 Ride History</h3>
-                    <p className="text-sm text-purple-700 mt-1">Complete ride details with users, drivers, locations</p>
+                    <h3 className="font-semibold text-blue-900">Ride History</h3>
+                    <p className="text-sm text-blue-700 mt-1">Complete ride details with users, drivers, locations</p>
                   </button>
 
                   <button
                     onClick={() => handleRunQuery('user-spending')}
                     disabled={loading}
-                    className="p-4 bg-green-100 border border-green-300 rounded-lg hover:bg-green-200 disabled:bg-gray-200 transition-colors text-left"
+                    className="p-4 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 disabled:bg-gray-200 transition-colors text-left"
                   >
-                    <h3 className="font-semibold text-green-900">User Spending</h3>
-                    <p className="text-sm text-green-700 mt-1">Total spending per user with balance info</p>
+                    <h3 className="font-semibold text-gray-900">User Spending</h3>
+                    <p className="text-sm text-gray-700 mt-1">Total spending per user with balance info</p>
                   </button>
 
                   <button
@@ -268,10 +268,10 @@ function App() {
                   <button
                     onClick={() => handleRunQuery('payment-audit')}
                     disabled={loading}
-                    className="p-4 bg-yellow-100 border border-yellow-300 rounded-lg hover:bg-yellow-200 disabled:bg-gray-200 transition-colors text-left"
+                    className="p-4 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 disabled:bg-gray-200 transition-colors text-left"
                   >
-                    <h3 className="font-semibold text-yellow-900">Payment Audit</h3>
-                    <p className="text-sm text-yellow-700 mt-1">Detailed payment transaction history</p>
+                    <h3 className="font-semibold text-gray-900">Payment Audit</h3>
+                    <p className="text-sm text-gray-700 mt-1">Detailed payment transaction history</p>
                   </button>
                 </div>
               </div>
