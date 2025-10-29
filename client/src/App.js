@@ -107,7 +107,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-indigo-100 p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
@@ -241,10 +241,10 @@ function App() {
                   <button
                     onClick={() => handleRunQuery('ride-history')}
                     disabled={loading}
-                    className="p-4 bg-blue-100 border border-blue-300 rounded-lg hover:bg-blue-200 disabled:bg-gray-200 transition-colors text-left"
+                    className="p-4 bg-indigo-100 border border-indigo-300 rounded-lg hover:bg-indigo-200 disabled:bg-gray-200 transition-colors text-left"
                   >
-                    <h3 className="font-semibold text-blue-900">Ride History</h3>
-                    <p className="text-sm text-blue-700 mt-1">Complete ride details with users, drivers, locations</p>
+                    <h3 className="font-semibold text-indigo-900">Ride History</h3>
+                    <p className="text-sm text-indigo-700 mt-1">Complete ride details with users, drivers, locations</p>
                   </button>
 
                   <button
@@ -259,10 +259,10 @@ function App() {
                   <button
                     onClick={() => handleRunQuery('driver-earnings')}
                     disabled={loading}
-                    className="p-4 bg-blue-100 border border-blue-300 rounded-lg hover:bg-blue-200 disabled:bg-gray-200 transition-colors text-left"
+                    className="p-4 bg-indigo-100 border border-indigo-300 rounded-lg hover:bg-indigo-200 disabled:bg-gray-200 transition-colors text-left"
                   >
-                    <h3 className="font-semibold text-blue-900">Driver Earnings</h3>
-                    <p className="text-sm text-blue-700 mt-1">Driver performance and earnings report</p>
+                    <h3 className="font-semibold text-indigo-900">Driver Earnings</h3>
+                    <p className="text-sm text-indigo-700 mt-1">Driver performance and earnings report</p>
                   </button>
 
                   <button

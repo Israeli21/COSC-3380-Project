@@ -6,8 +6,6 @@ DROP TABLE IF EXISTS bank_account CASCADE;
 DROP TABLE IF EXISTS ride CASCADE;
 DROP TABLE IF EXISTS payment CASCADE;
 
-SELECT * FROM payment;
-
 -- ============================================
 -- STEP 1: CREATE TABLES (NO FOREIGN KEYS YET)
 -- ============================================
