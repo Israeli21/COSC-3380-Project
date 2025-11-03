@@ -17,10 +17,9 @@ function App() {
     try {
       const backendRes = await testConnection();
       setBackendStatus(backendRes.message);
-
       const dbRes = await testDatabase();
       setDbStatus(`Connected! ${new Date(dbRes.timestamp).toLocaleString()}`);
-    } catch (error) {
+    } catch {
       setBackendStatus("Server not connected");
       setDbStatus("Database not connected");
     }
@@ -102,6 +101,14 @@ function App() {
     setLoading(false);
   };
 
+  // Hardcoded drivers for selection (frontend only)
+  const drivers = [
+    { id: 1, name: "Sarah Martinez" },
+    { id: 2, name: "David Kim" },
+    { id: 3, name: "John Lee" },
+    { id: 4, name: "Maria Gonzalez" },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white text-gray-800">
       {/* Navbar */}
@@ -110,9 +117,9 @@ function App() {
         <nav className="space-x-6">
           {[
             ["home", "Home"],
-            ["book", "Book Ride"],
+            ["book", "Request a Ride"],
             ["manage", "Manage System"],
-            ["reports", "Reports"],
+            ["reports", "Analytics Dashboard"],
           ].map(([key, label]) => (
             <button
               key={key}
@@ -131,7 +138,7 @@ function App() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto mt-10 bg-white/80 backdrop-blur-md shadow-xl rounded-3xl p-8">
-        {/* HOME TAB */}
+        {/* HOME */}
         {activeTab === "home" && (
           <div>
             <h2 className="text-2xl font-semibold text-purple-700 mb-4">
@@ -160,36 +167,113 @@ function App() {
           </div>
         )}
 
-        {/* BOOK TAB */}
+        {/* REQUEST A RIDE */}
         {activeTab === "book" && (
           <div>
-            <h2 className="text-2xl font-semibold text-purple-700 mb-4">
-              Book a Demo Ride
+            <h2 className="text-3xl font-bold text-gray-800 mb-6">
+              Request a Ride
             </h2>
-            <p className="text-gray-600 mb-6">
-              Simulate a real ride booking with instant payment processing.
-            </p>
-            <div className="bg-purple-50 border border-purple-200 rounded-2xl p-6 mb-5">
-              <ul className="text-sm text-gray-700 space-y-1">
-                <li>• User: James Wilson (ID 3)</li>
-                <li>• Driver: Sarah Martinez (ID 2)</li>
-                <li>• Category: Premium</li>
-                <li>• Route: Queensbury Ln → Fannin St</li>
-                <li>• Price: $42.00</li>
-                <li>• Duration: 32 minutes</li>
-              </ul>
+
+            <div className="bg-white rounded-2xl shadow-md p-8 max-w-2xl">
+              <form className="space-y-5">
+                {/* User Info */}
+                <div className="flex space-x-3">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter your name"
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="Enter your email"
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Pickup & Destination */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Pickup Location
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter pickup location"
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Destination
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter destination"
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Driver Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Choose Your Driver
+                  </label>
+                  <select className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent">
+                    <option value="">Select driver</option>
+                    {drivers.map((driver) => (
+                      <option key={driver.id} value={driver.id}>
+                        {driver.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Date & Time */}
+                <div className="flex items-center justify-between space-x-3">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Time
+                    </label>
+                    <input
+                      type="time"
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleRunTransaction}
+                  disabled={loading}
+                  className="mt-4 w-full bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 disabled:bg-gray-400"
+                >
+                  {loading ? "Processing..." : "Book Ride"}
+                </button>
+              </form>
             </div>
-            <button
-              onClick={handleRunTransaction}
-              disabled={loading}
-              className="w-full bg-purple-500 text-white py-3 rounded-xl hover:bg-purple-600 disabled:bg-gray-400"
-            >
-              {loading ? "Processing Transaction…" : "Confirm Ride"}
-            </button>
           </div>
         )}
 
-        {/* MANAGE TAB */}
+        {/* MANAGE */}
         {activeTab === "manage" && (
           <div>
             <h2 className="text-2xl font-semibold text-purple-700 mb-4">
@@ -234,7 +318,7 @@ function App() {
           </div>
         )}
 
-        {/* REPORTS TAB */}
+        {/* REPORTS (unchanged) */}
         {activeTab === "reports" && (
           <div>
             <h2 className="text-2xl font-semibold text-purple-700 mb-4">
@@ -244,98 +328,30 @@ function App() {
               Generate system reports and analyze ride, user, and driver data.
             </p>
             <div className="grid sm:grid-cols-2 gap-4">
-              <button
-                onClick={() => handleRunQuery("ride-history")}
-                disabled={loading}
-                className="p-5 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 text-left"
-              >
-                <h3 className="font-semibold text-purple-800">Ride History</h3>
-                <p className="text-sm text-gray-700 mt-1">
-                  Full list of all rides with users, drivers, and routes.
-                </p>
-              </button>
-              <button
-                onClick={() => handleRunQuery("user-spending")}
-                disabled={loading}
-                className="p-5 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 text-left"
-              >
-                <h3 className="font-semibold text-purple-800">User Spending</h3>
-                <p className="text-sm text-gray-700 mt-1">
-                  Total spending and balances by user.
-                </p>
-              </button>
-              <button
-                onClick={() => handleRunQuery("driver-earnings")}
-                disabled={loading}
-                className="p-5 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 text-left"
-              >
-                <h3 className="font-semibold text-purple-800">
-                  Driver Performance
-                </h3>
-                <p className="text-sm text-gray-700 mt-1">
-                  Earnings and performance reports per driver.
-                </p>
-              </button>
-              <button
-                onClick={() => handleRunQuery("payment-audit")}
-                disabled={loading}
-                className="p-5 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 text-left"
-              >
-                <h3 className="font-semibold text-purple-800">Payment Audit</h3>
-                <p className="text-sm text-gray-700 mt-1">
-                  Complete payment transaction logs.
-                </p>
-              </button>
+              {[
+                ["ride-history", "Ride History", "View all rides with users, drivers, and locations."],
+                ["user-spending", "User Spending", "Total spending and balance per user."],
+                ["driver-earnings", "Driver Performance", "Earnings and performance data per driver."],
+                ["payment-audit", "Payment Audit", "Full payment transaction logs and summaries."]
+              ].map(([query, title, desc]) => (
+                <button
+                  key={query}
+                  onClick={() => handleRunQuery(query)}
+                  disabled={loading}
+                  className="p-5 bg-purple-500 text-white rounded-xl hover:bg-purple-600 disabled:bg-gray-400 text-left shadow-sm"
+                >
+                  <h3 className="font-semibold text-lg">{title}</h3>
+                  <p className="text-sm mt-1 opacity-90">{desc}</p>
+                </button>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Status Messages */}
+        {/* MESSAGES + RESULTS */}
         {message && (
           <div className="mt-6 bg-purple-50 text-purple-800 border border-purple-200 p-4 rounded-xl">
             {message}
-          </div>
-        )}
-
-        {/* Query Results Table */}
-        {queryResults && queryResults.length > 0 && (
-          <div className="mt-6 bg-white border border-purple-100 rounded-2xl p-4 overflow-x-auto">
-            <h3 className="font-semibold text-purple-800 mb-2">
-              Query Results ({queryResults.length})
-            </h3>
-            <table className="w-full text-sm">
-              <thead className="bg-purple-100">
-                <tr>
-                  {Object.keys(queryResults[0]).map((key) => (
-                    <th
-                      key={key}
-                      className="px-3 py-2 text-left font-medium uppercase"
-                    >
-                      {key.replace(/_/g, " ")}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {queryResults.slice(0, 10).map((row, idx) => (
-                  <tr
-                    key={idx}
-                    className="border-b border-purple-50 hover:bg-purple-50"
-                  >
-                    {Object.values(row).map((val, i) => (
-                      <td key={i} className="px-3 py-2">
-                        {val ?? "-"}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {queryResults.length > 10 && (
-              <p className="text-sm text-gray-500 mt-2">
-                Showing first 10 of {queryResults.length} rows
-              </p>
-            )}
           </div>
         )}
       </main>
