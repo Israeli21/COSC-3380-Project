@@ -64,7 +64,7 @@ function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_id: 3,
+          user_id: 1,
           driver_id: 2,
           category_id: 2,
           pickup_location_id: 4,
@@ -318,7 +318,7 @@ function App() {
           </div>
         )}
 
-        {/* REPORTS (unchanged) */}
+        {/* REPORTS */}
         {activeTab === "reports" && (
           <div>
             <h2 className="text-2xl font-semibold text-purple-700 mb-4">
@@ -329,7 +329,7 @@ function App() {
             </p>
             <div className="grid sm:grid-cols-2 gap-4">
               {[
-                ["ride-history", "Ride History", "View all rides with users, drivers, and locations."],
+                ["ride-history", "Ride History (Transactions)", "View all rides with users, drivers, and locations."],
                 ["user-spending", "User Spending", "Total spending and balance per user."],
                 ["driver-earnings", "Driver Performance", "Earnings and performance data per driver."],
                 ["payment-audit", "Payment Audit", "Full payment transaction logs and summaries."]
@@ -352,6 +352,41 @@ function App() {
         {message && (
           <div className="mt-6 bg-purple-50 text-purple-800 border border-purple-200 p-4 rounded-xl">
             {message}
+          </div>
+        )}
+
+        {/* QUERY RESULTS DISPLAY */}
+        {queryResults && (
+          <div className="mt-8">
+            <h3 className="text-xl font-semibold text-purple-700 mb-4">Query Results</h3>
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-purple-100">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-purple-50">
+                    <tr>
+                      {queryResults.length > 0 && Object.keys(queryResults[0]).map((key) => (
+                        <th key={key} className="px-4 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                          {key.replace(/_/g, ' ')}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-purple-100">
+                    {queryResults.map((row, index) => (
+                      <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-purple-25'}>
+                        {Object.values(row).map((value, i) => (
+                          <td key={i} className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {typeof value === 'number' && value % 1 !== 0 
+                              ? parseFloat(value).toFixed(2) 
+                              : String(value)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
       </main>

@@ -238,29 +238,14 @@ app.get('/api/query/ride-history', async (req, res) => {
     const result = await pool.query(`
       SELECT 
         r.ride_id,
-        r.created_at as ride_date,
         u.name AS rider_name,
         d.name AS driver_name,
-        c.name AS category,
-        l1.address AS pickup_address,
-        l1.city AS pickup_city,
-        l2.address AS dropoff_address,
-        l2.city AS dropoff_city,
-        r.ride_time_minutes,
         r.price,
-        p.tax,
-        p.total,
         r.status
       FROM ride r
-      INNER JOIN app_user u ON r.user_id = u.user_id
-      INNER JOIN driver d ON r.driver_id = d.driver_id
-      INNER JOIN category c ON r.category_id = c.category_id
-      INNER JOIN location l1 ON r.pickup_location_id = l1.location_id
-      INNER JOIN location l2 ON r.dropoff_location_id = l2.location_id
-      LEFT JOIN payment p ON r.ride_id = p.ride_id
-      WHERE r.status = 'completed'
-      ORDER BY r.created_at DESC
-      LIMIT 20
+      JOIN app_user u ON r.user_id = u.user_id
+      JOIN driver d ON r.driver_id = d.driver_id
+      ORDER BY r.ride_id DESC
     `);
     
     res.json({ success: true, results: result.rows });
@@ -274,21 +259,15 @@ app.get('/api/query/user-spending', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
-        u.user_id,
         u.name AS user_name,
         u.email,
         COUNT(r.ride_id) AS total_rides,
-        COALESCE(SUM(p.subtotal), 0) AS total_spent_on_rides,
-        COALESCE(SUM(p.tax), 0) AS total_tax_paid,
-        COALESCE(SUM(p.total), 0) AS total_paid,
-        COALESCE(AVG(p.total), 0) AS average_ride_cost,
-        ba.balance AS current_balance
+        SUM(p.total) AS total_spent
       FROM app_user u
-      LEFT JOIN ride r ON u.user_id = r.user_id AND r.status = 'completed'
-      LEFT JOIN payment p ON r.ride_id = p.ride_id
-      LEFT JOIN bank_account ba ON u.user_id = ba.user_id
-      GROUP BY u.user_id, u.name, u.email, ba.balance
-      ORDER BY total_paid DESC
+      JOIN ride r ON u.user_id = r.user_id
+      JOIN payment p ON r.ride_id = p.ride_id
+      GROUP BY u.name, u.email
+      ORDER BY total_spent DESC
     `);
     
     res.json({ success: true, results: result.rows });
@@ -302,20 +281,13 @@ app.get('/api/query/driver-earnings', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
-        d.driver_id,
         d.name AS driver_name,
-        d.email,
-        d.license_number,
-        COUNT(r.ride_id) AS total_rides_completed,
-        COALESCE(SUM(r.price), 0) AS total_ride_fares,
-        COALESCE(AVG(r.price), 0) AS average_fare,
-        COALESCE(SUM(r.ride_time_minutes), 0) AS total_minutes_driven,
-        ba.balance AS current_balance
+        COUNT(r.ride_id) AS total_rides,
+        SUM(r.price) AS total_earnings
       FROM driver d
-      LEFT JOIN ride r ON d.driver_id = r.driver_id AND r.status = 'completed'
-      LEFT JOIN bank_account ba ON d.driver_id = ba.driver_id
-      GROUP BY d.driver_id, d.name, d.email, d.license_number, ba.balance
-      ORDER BY total_ride_fares DESC
+      JOIN ride r ON d.driver_id = r.driver_id
+      GROUP BY d.name
+      ORDER BY total_earnings DESC
     `);
     
     res.json({ success: true, results: result.rows });
@@ -330,26 +302,15 @@ app.get('/api/query/payment-audit', async (req, res) => {
     const result = await pool.query(`
       SELECT 
         p.payment_id,
-        p.payment_time,
         u.name AS rider,
         d.name AS driver,
-        r.ride_id,
-        c.name AS category,
-        l1.city || ' → ' || l2.city AS route,
-        r.ride_time_minutes,
-        p.subtotal,
-        p.tax,
-        p.total,
+        p.total AS amount_paid,
         p.payment_status
       FROM payment p
-      INNER JOIN ride r ON p.ride_id = r.ride_id
-      INNER JOIN app_user u ON r.user_id = u.user_id
-      INNER JOIN driver d ON r.driver_id = d.driver_id
-      INNER JOIN category c ON r.category_id = c.category_id
-      INNER JOIN location l1 ON r.pickup_location_id = l1.location_id
-      INNER JOIN location l2 ON r.dropoff_location_id = l2.location_id
-      ORDER BY p.payment_time DESC
-      LIMIT 20
+      JOIN ride r ON p.ride_id = r.ride_id
+      JOIN app_user u ON r.user_id = u.user_id
+      JOIN driver d ON r.driver_id = d.driver_id
+      ORDER BY p.payment_id DESC
     `);
     
     res.json({ success: true, results: result.rows });
@@ -428,16 +389,5 @@ app.get('/api/payments', async (req, res) => {
 
 // START SERVER
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📊 API endpoints ready:`);
-  console.log(`   - POST /api/init-database`);
-  console.log(`   - POST /api/insert-data`);
-  console.log(`   - POST /api/book-ride`);
-  console.log(`   - GET  /api/rides`);
-  console.log(`   - GET  /api/users`);
-  console.log(`   - GET  /api/payments`);
-  console.log(`   - GET  /api/query/ride-history`);
-  console.log(`   - GET  /api/query/user-spending`);
-  console.log(`   - GET  /api/query/driver-earnings`);
-  console.log(`   - GET  /api/query/payment-audit`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
