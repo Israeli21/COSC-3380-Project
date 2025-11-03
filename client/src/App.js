@@ -243,14 +243,14 @@ function App() {
                     disabled={loading}
                     className="p-4 bg-indigo-100 border border-indigo-300 rounded-lg hover:bg-indigo-200 disabled:bg-gray-200 transition-colors text-left"
                   >
-                    <h3 className="font-semibold text-indigo-900">Ride History</h3>
-                    <p className="text-sm text-indigo-700 mt-1">Complete ride details with users, drivers, locations</p>
+                    <h3 className="font-semibold text-gray-900">Ride History</h3>
+                    <p className="text-sm text-gray-700 mt-1">Complete ride details with users, drivers, locations</p>
                   </button>
 
                   <button
                     onClick={() => handleRunQuery('user-spending')}
                     disabled={loading}
-                    className="p-4 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 disabled:bg-gray-200 transition-colors text-left"
+                    className="p-4 bg-indigo-100 border border-indigo-300 rounded-lg hover:bg-indigo-200 disabled:bg-gray-200 transition-colors text-left"
                   >
                     <h3 className="font-semibold text-gray-900">User Spending</h3>
                     <p className="text-sm text-gray-700 mt-1">Total spending per user with balance info</p>
@@ -261,14 +261,14 @@ function App() {
                     disabled={loading}
                     className="p-4 bg-indigo-100 border border-indigo-300 rounded-lg hover:bg-indigo-200 disabled:bg-gray-200 transition-colors text-left"
                   >
-                    <h3 className="font-semibold text-indigo-900">Driver Earnings</h3>
-                    <p className="text-sm text-indigo-700 mt-1">Driver performance and earnings report</p>
+                    <h3 className="font-semibold text-gray-900">Driver Earnings</h3>
+                    <p className="text-sm text-gray-700 mt-1">Driver performance and earnings report</p>
                   </button>
 
                   <button
                     onClick={() => handleRunQuery('payment-audit')}
                     disabled={loading}
-                    className="p-4 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 disabled:bg-gray-200 transition-colors text-left"
+                    className="p-4 bg-indigo-100 border border-indigo-300 rounded-lg hover:bg-indigo-200 disabled:bg-gray-200 transition-colors text-left"
                   >
                     <h3 className="font-semibold text-gray-900">Payment Audit</h3>
                     <p className="text-sm text-gray-700 mt-1">Detailed payment transaction history</p>
