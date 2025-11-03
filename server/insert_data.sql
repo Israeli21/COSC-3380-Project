@@ -1,3 +1,5 @@
+-- insert_data.sql: populating the database with sample/test data
+-- Fills our empty database with sample data
 INSERT INTO category (category_id, name, description) VALUES
 (1, 'Economy', 'Standard affordable rides for everyday travel'),
 (2, 'Premium', 'Luxury vehicles with top-rated drivers'),
@@ -60,16 +62,16 @@ INSERT INTO driver (driver_id, name, email, phone, license_number) VALUES
 -- BANK ACCOUNTS
 -- ============================================
 
--- User Bank Accounts (customers)
+-- User Bank Accounts (customers) - Updated with higher balances for testing
 INSERT INTO bank_account (account_id, user_id, driver_id, account_type, balance) VALUES
-(1, 1, NULL, 'app_user', 150.00),
-(2, 2, NULL, 'app_user', 200.00),
-(3, 3, NULL, 'app_user', 75.50),
-(4, 4, NULL, 'app_user', 300.00),
-(5, 5, NULL, 'app_user', 125.75),
-(6, 6, NULL, 'app_user', 450.00),
-(7, 7, NULL, 'app_user', 89.25),
-(8, 8, NULL, 'app_user', 175.50);
+(1, 1, NULL, 'app_user', 1500.00),
+(2, 2, NULL, 'app_user', 2000.00),
+(3, 3, NULL, 'app_user', 1750.50),
+(4, 4, NULL, 'app_user', 3000.00),
+(5, 5, NULL, 'app_user', 1250.75),
+(6, 6, NULL, 'app_user', 4500.00),
+(7, 7, NULL, 'app_user', 890.25),
+(8, 8, NULL, 'app_user', 1750.50);
 
 -- Driver Bank Accounts
 INSERT INTO bank_account (account_id, user_id, driver_id, account_type, balance) VALUES

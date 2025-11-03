@@ -12,10 +12,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// ============================================
-// UTILITY ENDPOINTS
-// ============================================
-
+// Utility Endpoints
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is running!' });
 });
@@ -33,10 +30,7 @@ app.get('/api/db-test', async (req, res) => {
   }
 });
 
-// ============================================
 // DATABASE INITIALIZATION
-// ============================================
-
 app.post('/api/init-database', async (req, res) => {
   const client = await pool.connect();
   try {
@@ -101,9 +95,40 @@ app.post('/api/insert-data', async (req, res) => {
 });
 
 // ============================================
-// TRANSACTION: BOOK RIDE
+// UPDATE BALANCES ENDPOINT
 // ============================================
 
+app.post('/api/update-balances', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    // Update user balances to higher amounts
+    await client.query(`
+      UPDATE bank_account SET balance = 1500.00 WHERE account_id = 1;
+      UPDATE bank_account SET balance = 2000.00 WHERE account_id = 2;
+      UPDATE bank_account SET balance = 1750.50 WHERE account_id = 3;
+      UPDATE bank_account SET balance = 3000.00 WHERE account_id = 4;
+      UPDATE bank_account SET balance = 1250.75 WHERE account_id = 5;
+      UPDATE bank_account SET balance = 4500.00 WHERE account_id = 6;
+      UPDATE bank_account SET balance = 890.25 WHERE account_id = 7;
+      UPDATE bank_account SET balance = 1750.50 WHERE account_id = 8;
+    `);
+    
+    res.json({ 
+      success: true, 
+      message: 'User balances updated successfully! All users now have sufficient funds.' 
+    });
+  } catch (err) {
+    console.error('Balance update error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to update balances: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// TRANSACTION: BOOK RIDE
 app.post('/api/book-ride', async (req, res) => {
   const client = await pool.connect();
   try {
@@ -207,10 +232,7 @@ app.post('/api/book-ride', async (req, res) => {
   }
 });
 
-// ============================================
 // QUERIES WITH JOINS
-// ============================================
-
 app.get('/api/query/ride-history', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -337,10 +359,7 @@ app.get('/api/query/payment-audit', async (req, res) => {
   }
 });
 
-// ============================================
 // START SERVER
-// ============================================
-
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📊 API endpoints ready:`);
