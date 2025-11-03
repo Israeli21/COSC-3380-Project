@@ -97,7 +97,6 @@ INSERT INTO ride (ride_id, user_id, driver_id, category_id, pickup_location_id, 
 (9, 7, 4, 1, 1, 10, 25.50, 28, 'completed'),
 (10, 8, 6, 3, 3, 8, 31.00, 24, 'completed');
 
--- ============================================
 -- PAYMENTS (for completed rides)
 -- ============================================
 INSERT INTO payment (payment_id, ride_id, bank_account_id, amount, subtotal, tax, total, payment_status) VALUES

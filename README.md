@@ -62,7 +62,7 @@ LINK TO DEMO VIDEO
 HOW TO CONFIGURE .ENV FILE
 
 # Server config
-PORT=5000
+PORT=5001
 NODE_ENV=development
 
 # PostgreSQL connection

@@ -6,7 +6,7 @@ const path = require('path');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors());
@@ -359,6 +359,73 @@ app.get('/api/query/payment-audit', async (req, res) => {
   }
 });
 
+// ============================================
+// SIMPLE TABLE QUERIES
+// ============================================
+
+// Get all rides
+app.get('/api/rides', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const result = await client.query('SELECT * FROM ride ORDER BY ride_id');
+    res.json({ 
+      success: true, 
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (err) {
+    console.error('Ride query error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to query rides: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// Get all users
+app.get('/api/users', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const result = await client.query('SELECT * FROM app_user ORDER BY user_id');
+    res.json({ 
+      success: true, 
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (err) {
+    console.error('User query error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to query users: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// Get all payments
+app.get('/api/payments', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const result = await client.query('SELECT * FROM payment ORDER BY payment_id');
+    res.json({ 
+      success: true, 
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (err) {
+    console.error('Payment query error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to query payments: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
 // START SERVER
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
@@ -366,6 +433,9 @@ app.listen(PORT, () => {
   console.log(`   - POST /api/init-database`);
   console.log(`   - POST /api/insert-data`);
   console.log(`   - POST /api/book-ride`);
+  console.log(`   - GET  /api/rides`);
+  console.log(`   - GET  /api/users`);
+  console.log(`   - GET  /api/payments`);
   console.log(`   - GET  /api/query/ride-history`);
   console.log(`   - GET  /api/query/user-spending`);
   console.log(`   - GET  /api/query/driver-earnings`);
