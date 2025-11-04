@@ -7,7 +7,15 @@ function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [queryResults, setQueryResults] = useState(null);
   const [loading, setLoading] = useState(false);
+<<<<<<< HEAD
   const [message, setMessage] = useState("");
+=======
+  const [message, setMessage] = useState('');
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPhone, setNewUserPhone] = useState('');
+
+>>>>>>> 4cbf8c7 (Save current progress)
 
   useEffect(() => {
     checkConnections();
@@ -30,8 +38,13 @@ function App() {
     setLoading(true);
     setMessage("");
     try {
+<<<<<<< HEAD
       const response = await fetch("http://localhost:5001/api/init-database", {
         method: "POST",
+=======
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/init-database`, {
+      method: 'POST'
+>>>>>>> 4cbf8c7 (Save current progress)
       });
       const data = await response.json();
       setMessage(data.success ? data.message : data.error);
@@ -45,9 +58,15 @@ function App() {
     setLoading(true);
     setMessage("");
     try {
+<<<<<<< HEAD
       const response = await fetch("http://localhost:5001/api/insert-data", {
         method: "POST",
       });
+=======
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/insert-data`, {
+      method: 'POST'
+    });
+>>>>>>> 4cbf8c7 (Save current progress)
       const data = await response.json();
       setMessage(data.success ? data.message : data.error);
     } catch (error) {
@@ -56,13 +75,61 @@ function App() {
     setLoading(false);
   };
 
+  const handleAddUser = async () => {
+  if (!newUserName || !newUserEmail || !newUserPhone) {
+    setMessage('Please fill in all fields.');
+    return;
+  }
+
+  setLoading(true);
+  setMessage('');
+  
+  try {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: newUserName,
+        email: newUserEmail,
+        phone: newUserPhone
+      })
+    });
+    // log raw response first
+    const text = await response.text();
+    console.log('Raw response:', text);
+
+    // then parse JSON
+    const data = JSON.parse(text);
+
+    if (data.success) {
+      setMessage(`User added! ID: ${data.user.user_id}`);
+      setNewUserName('');
+      setNewUserEmail('');
+      setNewUserPhone('');
+    } else {
+      setMessage('Error: ' + data.error);
+    }
+  } catch (err) {
+    setMessage('Error: ' + err.message);
+  }
+
+  setLoading(false);
+};
+
+
   const handleRunTransaction = async () => {
     setLoading(true);
     setMessage("");
     try {
+<<<<<<< HEAD
       const response = await fetch("http://localhost:5001/api/book-ride", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+=======
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/book-ride`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+>>>>>>> 4cbf8c7 (Save current progress)
         body: JSON.stringify({
           user_id: 1,
           driver_id: 2,
@@ -87,9 +154,13 @@ function App() {
     setMessage("");
     setQueryResults(null);
     try {
+<<<<<<< HEAD
       const response = await fetch(
         `http://localhost:5001/api/query/${queryType}`
       );
+=======
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/query/${queryType}`);
+>>>>>>> 4cbf8c7 (Save current progress)
       const data = await response.json();
       if (data.success) {
         setQueryResults(data.results);
@@ -100,6 +171,7 @@ function App() {
     }
     setLoading(false);
   };
+  
 
   // Hardcoded drivers for selection (frontend only)
   const drivers = [
@@ -200,6 +272,7 @@ function App() {
                   </div>
                 </div>
 
+<<<<<<< HEAD
                 {/* Pickup & Destination */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -210,8 +283,88 @@ function App() {
                     placeholder="Enter pickup location"
                     className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent"
                   />
+=======
+            {/* Setup Tab */}
+            {activeTab === 'setup' && (
+              <div>
+                <h2 className="text-2xl font-semibold mb-4">Database Setup</h2>
+                <p className="text-gray-600 mb-6">
+                  Initialize your database schema and populate it with test data.
+                </p>
+                
+                <div className="space-y-4">
+                  {/* Step 1 */}
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-yellow-900 mb-2">Step 1: Initialize Schema</h3>
+                    <p className="text-sm text-yellow-800 mb-3">
+                      This will DROP all existing tables and recreate them. All data will be lost!
+                    </p>
+                    <button
+                      onClick={handleInitDatabase}
+                      disabled={loading}
+                      className="w-full bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 disabled:bg-gray-400 transition-colors"
+                    >
+                      {loading ? 'Processing...' : 'Initialize Database'}
+                    </button>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-green-900 mb-2">Step 2: Insert Test Data</h3>
+                    <p className="text-sm text-green-800 mb-3">
+                      Populate tables with sample users, drivers, locations, and more.
+                    </p>
+                    <button
+                      onClick={handleInsertData}
+                      disabled={loading}
+                      className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400 transition-colors"
+                    >
+                      {loading ? 'Processing...' : 'Insert Test Data'}
+                    </button>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-blue-900 mb-2">Step 3: Add New User</h3>
+                    <p className="text-sm text-blue-800 mb-3">
+                      Add a new user to the app_user table.
+                    </p>
+
+                    {/* Input fields */}
+                    <input 
+                      type="text"
+                      placeholder="Name"
+                      value={newUserName}
+                      onChange={(e) => setNewUserName(e.target.value)}
+                      className="w-full p-2 mb-2 border rounded"
+                    />
+                    <input 
+                      type="email"
+                      placeholder="Email"
+                      value={newUserEmail}
+                      onChange={(e) => setNewUserEmail(e.target.value)}
+                      className="w-full p-2 mb-2 border rounded"
+                    />
+                    <input 
+                      type="text"
+                      placeholder="Phone"
+                      value={newUserPhone}
+                      onChange={(e) => setNewUserPhone(e.target.value)}
+                      className="w-full p-2 mb-4 border rounded"
+                    />
+
+                    <button
+                      onClick={handleAddUser}
+                      disabled={loading}
+                      className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+                    >
+                      {loading ? 'Processing...' : 'Add New User'}
+                    </button>
+                  </div>
+>>>>>>> 4cbf8c7 (Save current progress)
                 </div>
 
+<<<<<<< HEAD
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Destination
@@ -258,6 +411,27 @@ function App() {
                       className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400"
                     />
                   </div>
+=======
+
+            {/* Transaction Tab */}
+            {activeTab === 'transaction' && (
+              <div>
+                <h2 className="text-2xl font-semibold mb-4">Test Transaction</h2>
+                <p className="text-gray-600 mb-6">
+                  Book a ride and process payment (updates 3 tables: ride, payment, bank_account)
+                </p>
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-4">
+                  <h3 className="font-semibold text-blue-900 mb-3">Transaction Details:</h3>
+                  <ul className="space-y-2 text-sm text-blue-800">
+                    <li>• <strong>User:</strong> James Wilson (ID: 3)</li>
+                    <li>• <strong>Driver:</strong> Sarah Martinez (ID: 2)</li>
+                    <li>• <strong>Category:</strong> Premium</li>
+                    <li>• <strong>Route:</strong> Queensbury Ln → Fannin St</li>
+                    <li>• <strong>Price:</strong> $42.00 + $3.36 tax = $45.36 total</li>
+                    <li>• <strong>Duration:</strong> 32 minutes</li>
+                  </ul>
+>>>>>>> 4cbf8c7 (Save current progress)
                 </div>
 
                 <button

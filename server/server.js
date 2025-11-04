@@ -232,6 +232,26 @@ app.post('/api/book-ride', async (req, res) => {
   }
 });
 
+// ADD NEW USER
+app.post('/api/users', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { name, email, phone } = req.body;
+
+    const result = await client.query(
+      'INSERT INTO app_user (name, email, phone) VALUES ($1, $2, $3) RETURNING *',
+      [name, email, phone]
+    );
+
+    res.json({ success: true, user: result.rows[0] });
+  } catch (err) {
+    console.error('Add user error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
 // QUERIES WITH JOINS
 app.get('/api/query/ride-history', async (req, res) => {
   try {
