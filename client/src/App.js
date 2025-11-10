@@ -113,11 +113,10 @@ function App() {
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white text-gray-800">
       {/* Navbar */}
       <header className="bg-gradient-to-r from-purple-700 to-purple-600 text-white shadow-md p-5 pb-8 flex justify-between items-center rounded-b-3xl">
-        <h1 className="text-3xl font-bold tracking-wide">CarConnect</h1>
-        <nav className="space-x-6">
+        <h1 className="text-3xl font-bold tracking-wide pl-2">CarConnect</h1>
+        <nav className="space-x-6 pr-4">
           {[
             ["home", "Home"],
-            ["book", "Request a Ride"],
             ["manage", "Manage System"],
             ["reports", "Analytics Dashboard"],
           ].map(([key, label]) => (
@@ -138,37 +137,8 @@ function App() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto mt-10 bg-white/80 backdrop-blur-md shadow-xl rounded-3xl p-8">
-        {/* HOME */}
+        {/* HOME: REQUEST A RIDE */}
         {activeTab === "home" && (
-          <div>
-            <h2 className="text-2xl font-semibold text-black mb-4">
-              System Connectivity
-            </h2>
-            <div className="space-y-3">
-              <div className="flex justify-between p-4 bg-gray-50 rounded-lg">
-                <span className="font-medium text-gray-700">
-                  Server Connection
-                </span>
-                <span className="text-sm">{backendStatus}</span>
-              </div>
-              <div className="flex justify-between p-4 bg-gray-50 rounded-lg">
-                <span className="font-medium text-gray-700">
-                  Database Link
-                </span>
-                <span className="text-sm">{dbStatus}</span>
-              </div>
-            </div>
-            <button
-              onClick={checkConnections}
-              className="mt-6 w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              Refresh Connection
-            </button>
-          </div>
-        )}
-
-        {/* REQUEST A RIDE */}
-        {activeTab === "book" && (
           <div>
             <h2 className="text-3xl font-bold text-gray-800 mb-6">
               Request a Ride
@@ -269,6 +239,34 @@ function App() {
                   {loading ? "Processing..." : "Book Ride"}
                 </button>
               </form>
+
+              {/* SYSTEM CONNECTIVITY STATUS: WILL DELETE THIS IN THE FUTURE */}
+              <div>
+                <h2 className="text-2xl font-semibold text-black mb-4 pt-10">
+                  System Connectivity
+                </h2>
+                <div className="space-y-3">
+                  <div className="flex justify-between p-4 bg-gray-50 rounded-lg">
+                    <span className="font-medium text-gray-700">
+                      Server Connection
+                    </span>
+                    <span className="text-sm">{backendStatus}</span>
+                  </div>
+                  <div className="flex justify-between p-4 bg-gray-50 rounded-lg">
+                    <span className="font-medium text-gray-700">
+                      Database Link
+                    </span>
+                    <span className="text-sm">{dbStatus}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={checkConnections}
+                  className="mt-6 w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  Refresh Connection
+                </button>
+              </div>
+
             </div>
           </div>
         )}
@@ -338,7 +336,7 @@ function App() {
                   key={query}
                   onClick={() => handleRunQuery(query)}
                   disabled={loading}
-                  className="p-5 bg-purple-500 text-white rounded-xl hover:bg-purple-600 disabled:bg-gray-400 text-left shadow-sm"
+                  className="p-5 bg-purple-600 text-white rounded-xl hover:bg-purple-00 disabled:bg-gray-400 text-left shadow-sm"
                 >
                   <h3 className="font-semibold text-lg">{title}</h3>
                   <p className="text-sm mt-1 opacity-90">{desc}</p>
