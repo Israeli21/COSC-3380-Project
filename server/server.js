@@ -293,13 +293,15 @@ app.get('/api/query/user-spending', async (req, res) => {
     const result = await pool.query(`
       SELECT 
         u.name AS user_name,
-        u.email,
         COUNT(r.ride_id) AS total_rides,
-        SUM(p.total) AS total_spent
+        SUM(p.total) AS total_spent,
+        ba.balance AS current_balance
       FROM app_user u
       JOIN ride r ON u.user_id = r.user_id
       JOIN payment p ON r.ride_id = p.ride_id
-      GROUP BY u.name, u.email
+      JOIN bank_account ba ON u.user_id = ba.user_id
+      WHERE ba.account_type = 'app_user'
+      GROUP BY u.name, ba.balance
       ORDER BY total_spent DESC
     `);
     
