@@ -132,13 +132,46 @@ app.post('/api/update-balances', async (req, res) => {
 app.post('/api/book-ride', async (req, res) => {
   const client = await pool.connect();
   try {
-    const { user_id, driver_id, category_id, pickup_location_id, dropoff_location_id, price, ride_time_minutes } = req.body;
+    const { user_name, driver_id, pickup_location_id, destination_location_id, ride_date, ride_time } = req.body;
+    
+    // Default price and ride time for now (can be made dynamic later)
+    const price = 25.00;
+    const ride_time_minutes = 30;
     
     // Calculate tax and total
     const tax = parseFloat((price * 0.08).toFixed(2));
     const total = parseFloat((price + tax).toFixed(2));
     
     await client.query('BEGIN');
+    
+    // Check if user exists, if not create them
+    let userResult = await client.query(
+      'SELECT user_id FROM app_user WHERE name = $1',
+      [user_name]
+    );
+    
+    let user_id;
+    if (userResult.rows.length === 0) {
+      // Create new user
+      const maxUserId = await client.query('SELECT COALESCE(MAX(user_id), 0) + 1 as next_id FROM app_user');
+      user_id = maxUserId.rows[0].next_id;
+      
+      await client.query(
+        'INSERT INTO app_user (user_id, name) VALUES ($1, $2)',
+        [user_id, user_name]
+      );
+      
+      // Create bank account for new user with $1000 starting balance
+      const maxAccountId = await client.query('SELECT COALESCE(MAX(account_id), 0) + 1 as next_id FROM bank_account');
+      const accountId = maxAccountId.rows[0].next_id;
+      
+      await client.query(
+        'INSERT INTO bank_account (account_id, user_id, driver_id, account_type, balance) VALUES ($1, $2, NULL, $3, $4)',
+        [accountId, user_id, 'app_user', 1000.00]
+      );
+    } else {
+      user_id = userResult.rows[0].user_id;
+    }
     
     // Check user balance
     const balanceCheck = await client.query(
@@ -157,22 +190,47 @@ app.post('/api/book-ride', async (req, res) => {
       throw new Error(`Insufficient funds. Balance: $${userBalance}, Required: $${total}`);
     }
     
+    // Handle date - insert if not exists
+    let dateResult = await client.query('SELECT date_id FROM date WHERE date_value = $1', [ride_date]);
+    let date_id;
+    if (dateResult.rows.length === 0) {
+      const maxDateId = await client.query('SELECT COALESCE(MAX(date_id), 0) + 1 as next_id FROM date');
+      date_id = maxDateId.rows[0].next_id;
+      await client.query('INSERT INTO date (date_id, date_value) VALUES ($1, $2)', [date_id, ride_date]);
+    } else {
+      date_id = dateResult.rows[0].date_id;
+    }
+    
+    // Handle time - insert if not exists
+    let timeResult = await client.query('SELECT time_id FROM time WHERE time_value = $1', [ride_time]);
+    let time_id;
+    if (timeResult.rows.length === 0) {
+      const maxTimeId = await client.query('SELECT COALESCE(MAX(time_id), 0) + 1 as next_id FROM time');
+      time_id = maxTimeId.rows[0].next_id;
+      await client.query('INSERT INTO time (time_id, time_value) VALUES ($1, $2)', [time_id, ride_time]);
+    } else {
+      time_id = timeResult.rows[0].time_id;
+    }
+    
     // Get next ride_id
     const maxRideId = await client.query('SELECT COALESCE(MAX(ride_id), 0) + 1 as next_id FROM ride');
     const rideId = maxRideId.rows[0].next_id;
     
     // Insert ride
     await client.query(
-      `INSERT INTO ride (ride_id, user_id, driver_id, category_id, pickup_location_id, dropoff_location_id, price, ride_time_minutes, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [rideId, user_id, driver_id, category_id, pickup_location_id, dropoff_location_id, price, ride_time_minutes, 'completed']
+      `INSERT INTO ride (ride_id, user_id, driver_id, pickup_location_id, destination_location_id, date_id, time_id, price, ride_time_minutes, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [rideId, user_id, driver_id, pickup_location_id, destination_location_id, date_id, time_id, price, ride_time_minutes, 'completed']
     );
     
     // Insert payment
+    const maxPaymentId = await client.query('SELECT COALESCE(MAX(payment_id), 0) + 1 as next_id FROM payment');
+    const paymentId = maxPaymentId.rows[0].next_id;
+    
     await client.query(
       `INSERT INTO payment (payment_id, ride_id, bank_account_id, amount, subtotal, tax, total, payment_status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [rideId, rideId, accountId, price, price, tax, total, 'completed']
+      [paymentId, rideId, accountId, price, price, tax, total, 'completed']
     );
     
     // Deduct from user account
@@ -190,34 +248,9 @@ app.post('/api/book-ride', async (req, res) => {
     
     await client.query('COMMIT');
     
-    // Get transaction details
-    const result = await client.query(`
-      SELECT 
-        r.ride_id,
-        u.name AS rider,
-        d.name AS driver,
-        c.name AS category,
-        l1.address AS pickup,
-        l2.address AS dropoff,
-        r.price,
-        p.tax,
-        p.total,
-        ba.balance AS user_balance_after
-      FROM ride r
-      JOIN app_user u ON r.user_id = u.user_id
-      JOIN driver d ON r.driver_id = d.driver_id
-      JOIN category c ON r.category_id = c.category_id
-      JOIN location l1 ON r.pickup_location_id = l1.location_id
-      JOIN location l2 ON r.dropoff_location_id = l2.location_id
-      JOIN payment p ON r.ride_id = p.ride_id
-      JOIN bank_account ba ON p.bank_account_id = ba.account_id
-      WHERE r.ride_id = $1
-    `, [rideId]);
-    
     res.json({ 
       success: true, 
-      message: `Transaction completed! Ride ID: ${rideId}, User charged: $${total}, Driver earned: $${driverEarnings}`,
-      result: result.rows
+      message: `Ride booked successfully! Ride ID: ${rideId}, Total charged: $${total}`,
     });
     
   } catch (err) {
@@ -381,6 +414,69 @@ app.get('/api/payments', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: 'Failed to query payments: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// Get all pickup locations
+app.get('/api/pickup-locations', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const result = await client.query('SELECT * FROM pickup_location ORDER BY pickup_location_id');
+    res.json({ 
+      success: true, 
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (err) {
+    console.error('Pickup location query error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to query pickup locations: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// Get all destination locations
+app.get('/api/destination-locations', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const result = await client.query('SELECT * FROM destination_location ORDER BY destination_location_id');
+    res.json({ 
+      success: true, 
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (err) {
+    console.error('Destination location query error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to query destination locations: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// Get all drivers
+app.get('/api/drivers', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const result = await client.query('SELECT * FROM driver ORDER BY driver_id');
+    res.json({ 
+      success: true, 
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (err) {
+    console.error('Driver query error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to query drivers: ' + err.message 
     });
   } finally {
     client.release();

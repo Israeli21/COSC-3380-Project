@@ -9,9 +9,45 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  // Form state for ride request
+  const [rideForm, setRideForm] = useState({
+    userName: "",
+    pickupLocationId: "",
+    destinationLocationId: "",
+    driverId: "",
+    rideDate: "",
+    rideTime: "",
+  });
+
+  // Dropdown data from database
+  const [pickupLocations, setPickupLocations] = useState([]);
+  const [destinationLocations, setDestinationLocations] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+
   useEffect(() => {
     checkConnections();
+    fetchDropdownData();
   }, []);
+
+  const fetchDropdownData = async () => {
+    try {
+      const [pickupRes, destRes, driverRes] = await Promise.all([
+        fetch("http://localhost:5001/api/pickup-locations"),
+        fetch("http://localhost:5001/api/destination-locations"),
+        fetch("http://localhost:5001/api/drivers"),
+      ]);
+
+      const pickupData = await pickupRes.json();
+      const destData = await destRes.json();
+      const driverData = await driverRes.json();
+
+      if (pickupData.success) setPickupLocations(pickupData.data);
+      if (destData.success) setDestinationLocations(destData.data);
+      if (driverData.success) setDrivers(driverData.data);
+    } catch (error) {
+      console.error("Failed to fetch dropdown data:", error);
+    }
+  };
 
   const checkConnections = async () => {
     try {
@@ -101,13 +137,50 @@ function App() {
     setLoading(false);
   };
 
-  // Hardcoded drivers for selection (frontend only)
-  const drivers = [
-    { id: 1, name: "Sarah Martinez" },
-    { id: 2, name: "David Kim" },
-    { id: 3, name: "John Lee" },
-    { id: 4, name: "Maria Gonzalez" },
-  ];
+  const handleRideSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+
+    // Validate form
+    if (!rideForm.userName || !rideForm.pickupLocationId || !rideForm.destinationLocationId || 
+        !rideForm.driverId || !rideForm.rideDate || !rideForm.rideTime) {
+      setMessage("Please fill in all fields");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:5001/api/book-ride", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_name: rideForm.userName,
+          pickup_location_id: parseInt(rideForm.pickupLocationId),
+          destination_location_id: parseInt(rideForm.destinationLocationId),
+          driver_id: parseInt(rideForm.driverId),
+          ride_date: rideForm.rideDate,
+          ride_time: rideForm.rideTime,
+        }),
+      });
+      const data = await response.json();
+      setMessage(data.success ? "Ride booked successfully!" : data.error);
+      if (data.success) {
+        // Reset form
+        setRideForm({
+          userName: "",
+          pickupLocationId: "",
+          destinationLocationId: "",
+          driverId: "",
+          rideDate: "",
+          rideTime: "",
+        });
+      }
+    } catch (error) {
+      setMessage("Error: " + error.message);
+    }
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white text-gray-800">
@@ -145,7 +218,7 @@ function App() {
             </h2>
 
             <div className="bg-white rounded-2xl shadow-md p-8 max-w-2xl">
-              <form className="space-y-5">
+              <form className="space-y-5" onSubmit={handleRideSubmit}>
                 {/* User Info */}
                 <div className="flex space-x-3">
                   <div className="flex-1">
@@ -155,16 +228,8 @@ function App() {
                     <input
                       type="text"
                       placeholder="Enter your name"
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="Enter your email"
+                      value={rideForm.userName}
+                      onChange={(e) => setRideForm({...rideForm, userName: e.target.value})}
                       className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent"
                     />
                   </div>
@@ -175,22 +240,36 @@ function App() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Pickup Location
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Enter pickup location"
-                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent"
-                  />
+                  <select
+                    value={rideForm.pickupLocationId}
+                    onChange={(e) => setRideForm({...rideForm, pickupLocationId: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                  >
+                    <option value="">Select pickup location</option>
+                    {pickupLocations.map((loc) => (
+                      <option key={loc.pickup_location_id} value={loc.pickup_location_id}>
+                        {loc.address} - {loc.city}, {loc.state}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Destination
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Enter destination"
-                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent"
-                  />
+                  <select
+                    value={rideForm.destinationLocationId}
+                    onChange={(e) => setRideForm({...rideForm, destinationLocationId: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                  >
+                    <option value="">Select destination</option>
+                    {destinationLocations.map((loc) => (
+                      <option key={loc.destination_location_id} value={loc.destination_location_id}>
+                        {loc.address} - {loc.city}, {loc.state}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Driver Selection */}
@@ -198,10 +277,14 @@ function App() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Choose Your Driver
                   </label>
-                  <select className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent">
+                  <select 
+                    value={rideForm.driverId}
+                    onChange={(e) => setRideForm({...rideForm, driverId: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                  >
                     <option value="">Select driver</option>
                     {drivers.map((driver) => (
-                      <option key={driver.id} value={driver.id}>
+                      <option key={driver.driver_id} value={driver.driver_id}>
                         {driver.name}
                       </option>
                     ))}
@@ -216,6 +299,8 @@ function App() {
                     </label>
                     <input
                       type="date"
+                      value={rideForm.rideDate}
+                      onChange={(e) => setRideForm({...rideForm, rideDate: e.target.value})}
                       className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400"
                     />
                   </div>
@@ -225,14 +310,15 @@ function App() {
                     </label>
                     <input
                       type="time"
+                      value={rideForm.rideTime}
+                      onChange={(e) => setRideForm({...rideForm, rideTime: e.target.value})}
                       className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400"
                     />
                   </div>
                 </div>
 
                 <button
-                  type="button"
-                  onClick={handleRunTransaction}
+                  type="submit"
                   disabled={loading}
                   className="mt-4 w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 disabled:bg-gray-400"
                 >
@@ -260,10 +346,13 @@ function App() {
                   </div>
                 </div>
                 <button
-                  onClick={checkConnections}
+                  onClick={() => {
+                    checkConnections();
+                    fetchDropdownData();
+                  }}
                   className="mt-6 w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors"
                 >
-                  Refresh Connection
+                  Refresh All Data
                 </button>
               </div>
 
