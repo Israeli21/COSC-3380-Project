@@ -164,8 +164,8 @@ function App() {
         }),
       });
       const data = await response.json();
-      setMessage(data.success ? "Ride booked successfully!" : data.error);
       if (data.success) {
+        setMessage(`${data.message} Transaction time: ${data.executionTime}ms`);
         // Reset form
         setRideForm({
           userName: "",
@@ -175,6 +175,8 @@ function App() {
           rideDate: "",
           rideTime: "",
         });
+      } else {
+        setMessage(data.error);
       }
     } catch (error) {
       setMessage("Error: " + error.message);
@@ -191,7 +193,7 @@ function App() {
           {[
             ["home", "Home"],
             ["manage", "Manage System"],
-            ["reports", "Analytics Dashboard"],
+            ["reports", "Analytics"],
           ].map(([key, label]) => (
             <button
               key={key}
@@ -409,7 +411,7 @@ function App() {
         {activeTab === "reports" && (
           <div>
             <h2 className="text-2xl font-semibold text-black mb-4">
-              Analytics Dashboard
+              Analytics
             </h2>
             <p className="text-gray-600 mb-6">
               Generate system reports and analyze ride, user, and driver data.

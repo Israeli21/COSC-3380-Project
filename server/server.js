@@ -130,6 +130,7 @@ app.post('/api/update-balances', async (req, res) => {
 
 // TRANSACTION: BOOK RIDE
 app.post('/api/book-ride', async (req, res) => {
+  const startTime = Date.now();
   const client = await pool.connect();
   try {
     const { user_name, driver_id, pickup_location_id, destination_location_id, ride_date, ride_time } = req.body;
@@ -248,9 +249,12 @@ app.post('/api/book-ride', async (req, res) => {
     
     await client.query('COMMIT');
     
+    const executionTime = Date.now() - startTime;
+    
     res.json({ 
       success: true, 
-      message: `Ride booked successfully! Ride ID: ${rideId}, Total charged: $${total}`,
+      message: `Ride booked successfully! Ride ID: ${rideId}; Total charged: $${total};`,
+      executionTime: executionTime
     });
     
   } catch (err) {
