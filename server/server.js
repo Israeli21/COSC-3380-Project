@@ -138,8 +138,8 @@ app.post('/api/book-ride', async (req, res) => {
     const price = 25.00;
     const ride_time_minutes = 30;
     
-    // Calculate tax and total
-    const tax = parseFloat((price * 0.08).toFixed(2));
+    // Calculate tax (8.25%) and total
+    const tax = parseFloat((price * 0.0825).toFixed(2));
     const total = parseFloat((price + tax).toFixed(2));
     
     await client.query('BEGIN');
@@ -294,6 +294,8 @@ app.get('/api/query/user-spending', async (req, res) => {
       SELECT 
         u.name AS user_name,
         COUNT(r.ride_id) AS total_rides,
+        SUM(p.subtotal) AS subtotal,
+        SUM(p.tax) AS total_tax,
         SUM(p.total) AS total_spent,
         ba.balance AS current_balance
       FROM app_user u
