@@ -23,10 +23,16 @@ function App() {
   const [pickupLocations, setPickupLocations] = useState([]);
   const [destinationLocations, setDestinationLocations] = useState([]);
   const [drivers, setDrivers] = useState([]);
+  
+  // User account management
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
 
   useEffect(() => {
     checkConnections();
     fetchDropdownData();
+    fetchUsers();
   }, []);
 
   const fetchDropdownData = async () => {
@@ -47,6 +53,23 @@ function App() {
     } catch (error) {
       console.error("Failed to fetch dropdown data:", error);
     }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch("http://localhost:5001/api/users");
+      const data = await response.json();
+      if (data.success) {
+        setUsers(data.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    }
+  };
+
+  const handleUserSelect = (user) => {
+    setSelectedUser(user);
+    setShowAccountDropdown(false);
   };
 
   const checkConnections = async () => {
@@ -189,25 +212,95 @@ function App() {
       {/* Navbar */}
       <header className="bg-gradient-to-r from-purple-700 to-purple-600 text-white shadow-md p-5 pb-8 flex justify-between items-center rounded-b-3xl">
         <h1 className="text-3xl font-bold tracking-wide pl-2">CarConnect</h1>
-        <nav className="space-x-6 pr-4">
-          {[
-            ["home", "Home"],
-            ["manage", "Manage System"],
-            ["reports", "Analytics"],
-          ].map(([key, label]) => (
+        <div className="flex items-center gap-8">
+          <nav className="space-x-6">
+            {[
+              ["home", "Home"],
+              ["manage", "Manage System"],
+              ["reports", "Analytics"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={`capitalize font-medium ${
+                  activeTab === key
+                    ? "underline underline-offset-8"
+                    : "hover:opacity-80"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+          
+          {/* Account Circle Dropdown */}
+          <div className="relative">
             <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={`capitalize font-medium ${
-                activeTab === key
-                  ? "underline underline-offset-8"
-                  : "hover:opacity-80"
-              }`}
+              onClick={() => setShowAccountDropdown(!showAccountDropdown)}
+              className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              title="Select Account"
             >
-              {label}
+              {selectedUser ? (
+                <span className="text-sm font-semibold">
+                  {selectedUser.name.charAt(0).toUpperCase()}
+                </span>
+              ) : (
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+              )}
             </button>
-          ))}
-        </nav>
+            
+            {/* Dropdown Menu */}
+            {showAccountDropdown && (
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl z-50 py-2 border border-gray-200">
+                <div className="px-4 py-2 border-b border-gray-200">
+                  <p className="text-sm font-semibold text-gray-700">Select Account</p>
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {users.length > 0 ? (
+                    users.map((user) => (
+                      <button
+                        key={user.user_id}
+                        onClick={() => handleUserSelect(user)}
+                        className={`w-full text-left px-4 py-2 hover:bg-purple-50 transition-colors ${
+                          selectedUser?.user_id === user.user_id ? 'bg-purple-100' : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-semibold">
+                            {user.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                            <p className="text-xs text-gray-500">User ID: {user.user_id}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-gray-500">
+                      No users found. Create a ride to add users.
+                    </div>
+                  )}
+                </div>
+                {selectedUser && (
+                  <div className="border-t border-gray-200 mt-2 pt-2">
+                    <button
+                      onClick={() => {
+                        setSelectedUser(null);
+                        setShowAccountDropdown(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </header>
 
       {/* Main Content */}
