@@ -410,12 +410,23 @@ function App() {
         {/* HOME: REQUEST A RIDE */}
         {activeTab === "home" && (
           <div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-6">
+            <h2 className="text-4xl font-bold text-gray-800 mb-10">
               Request a Ride
             </h2>
 
-            <div className="bg-white rounded-2xl shadow-md p-8 max-w-2xl">
-              <form className="space-y-5" onSubmit={handleRideSubmit}>
+            <div className="flex gap-6">
+              {/* Left Side: Houston Image */}
+              <div className="flex-shrink-0 w-1/3">
+                <img 
+                  src="/houston.jpg" 
+                  alt="Houston" 
+                  className="w-full h-4/5 object-cover rounded-2xl shadow-md" 
+                />
+              </div>
+
+              {/* Right Side: Form */}
+              <div className="bg-white rounded-2xl shadow-md p-8 flex-1">
+                <form className="space-y-5" onSubmit={handleRideSubmit}>
                 {/* Pickup & Destination */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -536,11 +547,11 @@ function App() {
                   Refresh All Data
                 </button>
               </div>
-
+            </div>
             </div>
           </div>
         )}
-
+        
         {/* MANAGE - ACCOUNT */}
         {activeTab === "manage" && (
           <div>
