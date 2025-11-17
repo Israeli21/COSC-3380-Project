@@ -491,6 +491,155 @@ app.get('/api/drivers', async (req, res) => {
   }
 });
 
+// GET USER BALANCE
+app.get('/api/user-balance/:userId', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { userId } = req.params;
+    
+    const result = await client.query(
+      `SELECT balance 
+       FROM bank_account 
+       WHERE user_id = $1`,
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'User account not found' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      balance: parseFloat(result.rows[0].balance)
+    });
+  } catch (err) {
+    console.error('User balance query error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to query user balance: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// CREATE NEW USER
+app.post('/api/create-user', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { name, startingBalance } = req.body;
+
+    if (!name || startingBalance === undefined) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Name and starting balance are required' 
+      });
+    }
+
+    await client.query('BEGIN');
+
+    // Insert user
+    const userResult = await client.query(
+      'INSERT INTO app_user (name) VALUES ($1) RETURNING user_id, name',
+      [name]
+    );
+    const newUser = userResult.rows[0];
+
+    // Create bank account for user
+    await client.query(
+      `INSERT INTO bank_account (user_id, account_type, balance) 
+       VALUES ($1, 'user', $2)`,
+      [newUser.user_id, startingBalance]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({ 
+      success: true, 
+      user: newUser,
+      balance: parseFloat(startingBalance)
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Create user error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to create user: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// ADJUST USER BALANCE
+app.post('/api/adjust-balance', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { userId, amount, operation } = req.body;
+
+    if (!userId || amount === undefined || !operation) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'User ID, amount, and operation are required' 
+      });
+    }
+
+    const adjustment = operation === 'add' ? parseFloat(amount) : -parseFloat(amount);
+
+    await client.query('BEGIN');
+
+    // Get current balance
+    const balanceResult = await client.query(
+      'SELECT balance FROM bank_account WHERE user_id = $1',
+      [userId]
+    );
+
+    if (balanceResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ 
+        success: false, 
+        error: 'User account not found' 
+      });
+    }
+
+    const currentBalance = parseFloat(balanceResult.rows[0].balance);
+    const newBalance = currentBalance + adjustment;
+
+    if (newBalance < 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Insufficient balance. Cannot go below $0.00' 
+      });
+    }
+
+    // Update balance
+    await client.query(
+      'UPDATE bank_account SET balance = $1 WHERE user_id = $2',
+      [newBalance, userId]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({ 
+      success: true, 
+      newBalance: newBalance
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Adjust balance error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to adjust balance: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
 // START SERVER
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
