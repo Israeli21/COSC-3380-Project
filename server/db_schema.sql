@@ -96,3 +96,36 @@ CREATE TABLE payment (
     CONSTRAINT fk_payment_ride FOREIGN KEY (ride_id) REFERENCES ride(ride_id) ON DELETE CASCADE,
     CONSTRAINT fk_payment_account FOREIGN KEY (bank_account_id) REFERENCES bank_account(account_id) ON DELETE RESTRICT
 );
+
+-- STEP 3: Create tables with composite keys:
+CREATE TABLE driver_availability (
+    driver_id INTEGER NOT NULL,
+    date_id INTEGER NOT NULL,
+    time_id INTEGER NOT NULL,
+    is_available BOOLEAN DEFAULT TRUE,
+    PRIMARY KEY (driver_id, date_id, time_id),
+    CONSTRAINT fk_availability_driver FOREIGN KEY (driver_id) REFERENCES driver(driver_id) ON DELETE CASCADE,
+    CONSTRAINT fk_availability_date FOREIGN KEY (date_id) REFERENCES date(date_id) ON DELETE CASCADE,
+    CONSTRAINT fk_availability_time FOREIGN KEY (time_id) REFERENCES time(time_id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_favorite_location (
+    user_id INTEGER NOT NULL,
+    pickup_location_id INTEGER NOT NULL,
+    nickname VARCHAR(100),
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, pickup_location_id),
+    CONSTRAINT fk_favorite_user FOREIGN KEY (user_id) REFERENCES app_user(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_favorite_location FOREIGN KEY (pickup_location_id) REFERENCES pickup_location(pickup_location_id) ON DELETE CASCADE
+);
+
+CREATE TABLE ride_feedback (
+    ride_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    comments TEXT,
+    feedback_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (ride_id, user_id),
+    CONSTRAINT fk_feedback_ride FOREIGN KEY (ride_id) REFERENCES ride(ride_id) ON DELETE CASCADE,
+    CONSTRAINT fk_feedback_user FOREIGN KEY (user_id) REFERENCES app_user(user_id) ON DELETE CASCADE
+);

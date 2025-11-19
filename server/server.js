@@ -640,6 +640,403 @@ app.post('/api/adjust-balance', async (req, res) => {
   }
 });
 
+// ============================================
+// COMPOSITE KEY ENDPOINTS
+// ============================================
+
+// GET DRIVER AVAILABILITY - Uses composite key (driver_id, date_id, time_id)
+app.get('/api/driver-availability/:driverId/:dateId/:timeId', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { driverId, dateId, timeId } = req.params;
+    
+    const result = await client.query(
+      `SELECT da.*, d.name as driver_name, dt.date_value, t.time_value
+       FROM driver_availability da
+       JOIN driver d ON da.driver_id = d.driver_id
+       JOIN date dt ON da.date_id = dt.date_id
+       JOIN time t ON da.time_id = t.time_id
+       WHERE da.driver_id = $1 AND da.date_id = $2 AND da.time_id = $3`,
+      [driverId, dateId, timeId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Availability record not found' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      data: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Driver availability query error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to query driver availability: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// GET ALL AVAILABILITY FOR A DRIVER
+app.get('/api/driver-availability/:driverId', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { driverId } = req.params;
+    
+    const result = await client.query(
+      `SELECT da.*, d.name as driver_name, dt.date_value, t.time_value
+       FROM driver_availability da
+       JOIN driver d ON da.driver_id = d.driver_id
+       JOIN date dt ON da.date_id = dt.date_id
+       JOIN time t ON da.time_id = t.time_id
+       WHERE da.driver_id = $1
+       ORDER BY dt.date_value, t.time_value`,
+      [driverId]
+    );
+
+    res.json({ 
+      success: true, 
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (err) {
+    console.error('Driver availability list error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to query driver availability: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// SET DRIVER AVAILABILITY - Creates/Updates using composite key
+app.post('/api/driver-availability', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { driverId, dateId, timeId, isAvailable } = req.body;
+
+    if (!driverId || !dateId || !timeId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Driver ID, date ID, and time ID are required' 
+      });
+    }
+
+    // Use UPSERT (INSERT ... ON CONFLICT) with composite key
+    const result = await client.query(
+      `INSERT INTO driver_availability (driver_id, date_id, time_id, is_available)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (driver_id, date_id, time_id) 
+       DO UPDATE SET is_available = $4
+       RETURNING *`,
+      [driverId, dateId, timeId, isAvailable !== false]
+    );
+
+    res.json({ 
+      success: true, 
+      data: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Set driver availability error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to set driver availability: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// DELETE DRIVER AVAILABILITY - Uses composite key
+app.delete('/api/driver-availability/:driverId/:dateId/:timeId', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { driverId, dateId, timeId } = req.params;
+    
+    const result = await client.query(
+      `DELETE FROM driver_availability 
+       WHERE driver_id = $1 AND date_id = $2 AND time_id = $3
+       RETURNING *`,
+      [driverId, dateId, timeId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Availability record not found' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Availability record deleted'
+    });
+  } catch (err) {
+    console.error('Delete driver availability error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to delete driver availability: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// GET USER FAVORITE LOCATIONS - Uses composite key (user_id, pickup_location_id)
+app.get('/api/user-favorites/:userId', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { userId } = req.params;
+    
+    const result = await client.query(
+      `SELECT ufl.*, pl.address, pl.city, pl.state, pl.zip_code
+       FROM user_favorite_location ufl
+       JOIN pickup_location pl ON ufl.pickup_location_id = pl.pickup_location_id
+       WHERE ufl.user_id = $1
+       ORDER BY ufl.added_at DESC`,
+      [userId]
+    );
+
+    res.json({ 
+      success: true, 
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (err) {
+    console.error('User favorites query error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to query user favorites: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// ADD USER FAVORITE LOCATION - Uses composite key
+app.post('/api/user-favorites', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { userId, pickupLocationId, nickname } = req.body;
+
+    if (!userId || !pickupLocationId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'User ID and pickup location ID are required' 
+      });
+    }
+
+    const result = await client.query(
+      `INSERT INTO user_favorite_location (user_id, pickup_location_id, nickname)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id, pickup_location_id) 
+       DO UPDATE SET nickname = $3
+       RETURNING *`,
+      [userId, pickupLocationId, nickname]
+    );
+
+    res.json({ 
+      success: true, 
+      data: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Add favorite location error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to add favorite location: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// DELETE USER FAVORITE LOCATION - Uses composite key
+app.delete('/api/user-favorites/:userId/:pickupLocationId', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { userId, pickupLocationId } = req.params;
+    
+    const result = await client.query(
+      `DELETE FROM user_favorite_location 
+       WHERE user_id = $1 AND pickup_location_id = $2
+       RETURNING *`,
+      [userId, pickupLocationId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Favorite location not found' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Favorite location removed'
+    });
+  } catch (err) {
+    console.error('Delete favorite location error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to delete favorite location: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// GET RIDE FEEDBACK - Uses composite key (ride_id, user_id)
+app.get('/api/ride-feedback/:rideId/:userId', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { rideId, userId } = req.params;
+    
+    const result = await client.query(
+      `SELECT rf.*, u.name as user_name
+       FROM ride_feedback rf
+       JOIN app_user u ON rf.user_id = u.user_id
+       WHERE rf.ride_id = $1 AND rf.user_id = $2`,
+      [rideId, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Feedback not found' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      data: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Ride feedback query error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to query ride feedback: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// GET ALL FEEDBACK FOR A RIDE
+app.get('/api/ride-feedback/:rideId', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { rideId } = req.params;
+    
+    const result = await client.query(
+      `SELECT rf.*, u.name as user_name
+       FROM ride_feedback rf
+       JOIN app_user u ON rf.user_id = u.user_id
+       WHERE rf.ride_id = $1
+       ORDER BY rf.feedback_date DESC`,
+      [rideId]
+    );
+
+    res.json({ 
+      success: true, 
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (err) {
+    console.error('Ride feedback list error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to query ride feedback: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// SUBMIT RIDE FEEDBACK - Uses composite key
+app.post('/api/ride-feedback', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { rideId, userId, rating, comments } = req.body;
+
+    if (!rideId || !userId || !rating) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Ride ID, user ID, and rating are required' 
+      });
+    }
+
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Rating must be between 1 and 5' 
+      });
+    }
+
+    const result = await client.query(
+      `INSERT INTO ride_feedback (ride_id, user_id, rating, comments)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (ride_id, user_id) 
+       DO UPDATE SET rating = $3, comments = $4, feedback_date = CURRENT_TIMESTAMP
+       RETURNING *`,
+      [rideId, userId, rating, comments]
+    );
+
+    res.json({ 
+      success: true, 
+      data: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Submit feedback error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to submit feedback: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// DELETE RIDE FEEDBACK - Uses composite key
+app.delete('/api/ride-feedback/:rideId/:userId', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { rideId, userId } = req.params;
+    
+    const result = await client.query(
+      `DELETE FROM ride_feedback 
+       WHERE ride_id = $1 AND user_id = $2
+       RETURNING *`,
+      [rideId, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Feedback not found' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Feedback deleted'
+    });
+  } catch (err) {
+    console.error('Delete feedback error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to delete feedback: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
 // START SERVER
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
