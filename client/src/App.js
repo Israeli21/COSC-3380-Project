@@ -360,14 +360,14 @@ function App() {
           <button
               onClick={handleInitDatabase}
               disabled={loading}
-              className="hidden lg:block capitalize font-medium hover:opacity-80 ml-4 pt-4"
+              className="hidden lg:block capitalize font-medium hover:opacity-80 ml-8 pt-4"
             >
               {loading ? "Processing…" : "Initialize Schema"}
           </button>
           <button
               onClick={handleInsertData}
               disabled={loading}
-              className="hidden lg:block capitalize font-medium hover:opacity-80 pt-4"
+              className="hidden lg:block capitalize font-medium hover:opacity-80 ml-6 pt-4"
             >
               {loading ? "Processing…" : "Load Demo Data"}
           </button>
