@@ -754,55 +754,55 @@ function App() {
                   key={query}
                   onClick={() => handleRunQuery(query)}
                   disabled={loading}
-                  className="p-5 bg-purple-600 text-white rounded-xl hover:bg-purple-00 disabled:bg-gray-400 text-left shadow-sm"
+                  className="p-5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:bg-gray-400 text-left shadow-sm"
                 >
                   <h3 className="font-semibold text-lg">{title}</h3>
                   <p className="text-sm mt-1 opacity-90">{desc}</p>
                 </button>
               ))}
             </div>
+
+            {/* Query Results - Only shown in reports tab */}
+            {queryResults && (
+              <div className="mt-8">
+                <h3 className="text-xl font-semibold text-black mb-4">Query Results</h3>
+                <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-purple-100">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-purple-50">
+                        <tr>
+                          {queryResults.length > 0 && Object.keys(queryResults[0]).map((key) => (
+                            <th key={key} className="px-4 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
+                              {key.replace(/_/g, ' ')}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-purple-100">
+                        {queryResults.map((row, index) => (
+                          <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-purple-25'}>
+                            {Object.values(row).map((value, i) => (
+                              <td key={i} className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {typeof value === 'number' && value % 1 !== 0 
+                                  ? parseFloat(value).toFixed(2) 
+                                  : String(value)}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* MESSAGES + RESULTS */}
-        {message && (
+        {/* MESSAGES + RESULTS - Hide query messages on non-reports tabs */}
+        {message && !(activeTab !== 'reports' && message.toLowerCase().includes('returned')) && (
           <div className="mt-6 bg-gray-50 text-black border border-purple-200 p-4 rounded-xl">
             {message}
-          </div>
-        )}
-
-        {/* QUERY RESULTS DISPLAY */}
-        {queryResults && (
-          <div className="mt-8">
-            <h3 className="text-xl font-semibold text-black mb-4">Query Results</h3>
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-purple-100">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-purple-50">
-                    <tr>
-                      {queryResults.length > 0 && Object.keys(queryResults[0]).map((key) => (
-                        <th key={key} className="px-4 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
-                          {key.replace(/_/g, ' ')}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-purple-100">
-                    {queryResults.map((row, index) => (
-                      <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-purple-25'}>
-                        {Object.values(row).map((value, i) => (
-                          <td key={i} className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {typeof value === 'number' && value % 1 !== 0 
-                              ? parseFloat(value).toFixed(2) 
-                              : String(value)}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </div>
         )}
       </main>
