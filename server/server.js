@@ -134,15 +134,31 @@ app.post('/api/book-ride', async (req, res) => {
   try {
     const { user_id, driver_id, pickup_location_id, destination_location_id, ride_date, ride_time } = req.body;
     
-    // Default price and ride time for now (can be made dynamic later)
-    const price = 25.00;
-    const ride_time_minutes = 30;
+    await client.query('BEGIN');
+    
+    // Get distance from location_distance table
+    const distanceResult = await client.query(
+      'SELECT distance_miles FROM location_distance WHERE start_location_id = $1 AND end_location_id = $2',
+      [pickup_location_id, destination_location_id]
+    );
+    
+    if (distanceResult.rows.length === 0) {
+      throw new Error('Distance not found for selected locations');
+    }
+    
+    const distanceMiles = parseFloat(distanceResult.rows[0].distance_miles);
+    
+    // Calculate price based on distance: $3 base + $2.50 per mile
+    const basePrice = 3.00;
+    const pricePerMile = 2.50;
+    const price = parseFloat((basePrice + (distanceMiles * pricePerMile)).toFixed(2));
+    
+    // Estimate ride time: assume 30 mph average speed, minimum 5 minutes
+    const ride_time_minutes = Math.max(5, Math.ceil((distanceMiles / 30) * 60));
     
     // Calculate tax (8.25%) and total
     const tax = parseFloat((price * 0.0825).toFixed(2));
     const total = parseFloat((price + tax).toFixed(2));
-    
-    await client.query('BEGIN');
     
     // Check user balance
     const balanceCheck = await client.query(
@@ -225,8 +241,16 @@ app.post('/api/book-ride', async (req, res) => {
     
     res.json({ 
       success: true, 
-      message: `Ride booked successfully! Ride ID: ${rideId}; Total charged: $${total};`,
-      executionTime: executionTime
+      message: `Ride booked successfully! Ride ID: ${rideId}; Distance: ${distanceMiles} miles; Price: $${price}; Total charged: $${total};`,
+      executionTime: executionTime,
+      rideDetails: {
+        rideId,
+        distance: distanceMiles,
+        price,
+        tax,
+        total,
+        estimatedTime: ride_time_minutes
+      }
     });
     
   } catch (err) {
@@ -873,24 +897,27 @@ app.delete('/api/user-favorites/:userId/:pickupLocationId', async (req, res) => 
   }
 });
 
-// GET RIDE FEEDBACK - Uses composite key (ride_id, user_id)
-app.get('/api/ride-feedback/:rideId/:userId', async (req, res) => {
+// GET LOCATION DISTANCE - Uses composite key (start_location_id, end_location_id)
+app.get('/api/location-distance/:startId/:endId', async (req, res) => {
   const client = await pool.connect();
   try {
-    const { rideId, userId } = req.params;
+    const { startId, endId } = req.params;
     
     const result = await client.query(
-      `SELECT rf.*, u.name as user_name
-       FROM ride_feedback rf
-       JOIN app_user u ON rf.user_id = u.user_id
-       WHERE rf.ride_id = $1 AND rf.user_id = $2`,
-      [rideId, userId]
+      `SELECT ld.*, 
+              pl.address as start_address, pl.city as start_city,
+              dl.address as end_address, dl.city as end_city
+       FROM location_distance ld
+       JOIN pickup_location pl ON ld.start_location_id = pl.pickup_location_id
+       JOIN destination_location dl ON ld.end_location_id = dl.destination_location_id
+       WHERE ld.start_location_id = $1 AND ld.end_location_id = $2`,
+      [startId, endId]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ 
         success: false, 
-        error: 'Feedback not found' 
+        error: 'Distance not found' 
       });
     }
 
@@ -899,29 +926,28 @@ app.get('/api/ride-feedback/:rideId/:userId', async (req, res) => {
       data: result.rows[0]
     });
   } catch (err) {
-    console.error('Ride feedback query error:', err);
+    console.error('Location distance query error:', err);
     res.status(500).json({ 
       success: false, 
-      error: 'Failed to query ride feedback: ' + err.message 
+      error: 'Failed to query location distance: ' + err.message 
     });
   } finally {
     client.release();
   }
 });
 
-// GET ALL FEEDBACK FOR A RIDE
-app.get('/api/ride-feedback/:rideId', async (req, res) => {
+// GET ALL LOCATION DISTANCES
+app.get('/api/location-distances', async (req, res) => {
   const client = await pool.connect();
   try {
-    const { rideId } = req.params;
-    
     const result = await client.query(
-      `SELECT rf.*, u.name as user_name
-       FROM ride_feedback rf
-       JOIN app_user u ON rf.user_id = u.user_id
-       WHERE rf.ride_id = $1
-       ORDER BY rf.feedback_date DESC`,
-      [rideId]
+      `SELECT ld.*, 
+              pl.address as start_address, pl.city as start_city,
+              dl.address as end_address, dl.city as end_city
+       FROM location_distance ld
+       JOIN pickup_location pl ON ld.start_location_id = pl.pickup_location_id
+       JOIN destination_location dl ON ld.end_location_id = dl.destination_location_id
+       ORDER BY ld.start_location_id, ld.end_location_id`
     );
 
     res.json({ 
@@ -930,43 +956,43 @@ app.get('/api/ride-feedback/:rideId', async (req, res) => {
       count: result.rows.length
     });
   } catch (err) {
-    console.error('Ride feedback list error:', err);
+    console.error('Location distances list error:', err);
     res.status(500).json({ 
       success: false, 
-      error: 'Failed to query ride feedback: ' + err.message 
+      error: 'Failed to query location distances: ' + err.message 
     });
   } finally {
     client.release();
   }
 });
 
-// SUBMIT RIDE FEEDBACK - Uses composite key
-app.post('/api/ride-feedback', async (req, res) => {
+// ADD/UPDATE LOCATION DISTANCE - Uses composite key
+app.post('/api/location-distance', async (req, res) => {
   const client = await pool.connect();
   try {
-    const { rideId, userId, rating, comments } = req.body;
+    const { startLocationId, endLocationId, distanceMiles } = req.body;
 
-    if (!rideId || !userId || !rating) {
+    if (!startLocationId || !endLocationId || distanceMiles === undefined) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Ride ID, user ID, and rating are required' 
+        error: 'Start location ID, end location ID, and distance in miles are required' 
       });
     }
 
-    if (rating < 1 || rating > 5) {
+    if (distanceMiles < 0) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Rating must be between 1 and 5' 
+        error: 'Distance must be greater than or equal to 0' 
       });
     }
 
     const result = await client.query(
-      `INSERT INTO ride_feedback (ride_id, user_id, rating, comments)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (ride_id, user_id) 
-       DO UPDATE SET rating = $3, comments = $4, feedback_date = CURRENT_TIMESTAMP
+      `INSERT INTO location_distance (start_location_id, end_location_id, distance_miles)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (start_location_id, end_location_id) 
+       DO UPDATE SET distance_miles = $3
        RETURNING *`,
-      [rideId, userId, rating, comments]
+      [startLocationId, endLocationId, distanceMiles]
     );
 
     res.json({ 
@@ -974,33 +1000,33 @@ app.post('/api/ride-feedback', async (req, res) => {
       data: result.rows[0]
     });
   } catch (err) {
-    console.error('Submit feedback error:', err);
+    console.error('Add/update distance error:', err);
     res.status(500).json({ 
       success: false, 
-      error: 'Failed to submit feedback: ' + err.message 
+      error: 'Failed to add/update distance: ' + err.message 
     });
   } finally {
     client.release();
   }
 });
 
-// DELETE RIDE FEEDBACK - Uses composite key
-app.delete('/api/ride-feedback/:rideId/:userId', async (req, res) => {
+// DELETE LOCATION DISTANCE - Uses composite key
+app.delete('/api/location-distance/:startId/:endId', async (req, res) => {
   const client = await pool.connect();
   try {
-    const { rideId, userId } = req.params;
+    const { startId, endId } = req.params;
     
     const result = await client.query(
-      `DELETE FROM ride_feedback 
-       WHERE ride_id = $1 AND user_id = $2
+      `DELETE FROM location_distance 
+       WHERE start_location_id = $1 AND end_location_id = $2
        RETURNING *`,
-      [rideId, userId]
+      [startId, endId]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ 
         success: false, 
-        error: 'Feedback not found' 
+        error: 'Distance not found' 
       });
     }
 

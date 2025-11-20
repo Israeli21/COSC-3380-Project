@@ -9,7 +9,7 @@ DROP TABLE IF EXISTS bank_account CASCADE;
 DROP TABLE IF EXISTS payment CASCADE;
 DROP TABLE IF EXISTS driver_availability CASCADE;
 DROP TABLE IF EXISTS user_favorite_location CASCADE;
-DROP TABLE IF EXISTS ride_feedback CASCADE;
+DROP TABLE IF EXISTS location_distance CASCADE;
 
 -- STEP 1: CREATE TABLES (NO FOREIGN KEYS YET):
 CREATE TABLE app_user (
@@ -124,13 +124,11 @@ CREATE TABLE user_favorite_location (
     CONSTRAINT fk_favorite_location FOREIGN KEY (pickup_location_id) REFERENCES pickup_location(pickup_location_id) ON DELETE CASCADE
 );
 
-CREATE TABLE ride_feedback (
-    ride_id INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
-    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
-    comments TEXT,
-    feedback_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (ride_id, user_id),
-    CONSTRAINT fk_feedback_ride FOREIGN KEY (ride_id) REFERENCES ride(ride_id) ON DELETE CASCADE,
-    CONSTRAINT fk_feedback_user FOREIGN KEY (user_id) REFERENCES app_user(user_id) ON DELETE CASCADE
+CREATE TABLE location_distance (
+    start_location_id INTEGER NOT NULL,
+    end_location_id INTEGER NOT NULL,
+    distance_miles DECIMAL(5, 2) NOT NULL,
+    PRIMARY KEY (start_location_id, end_location_id),
+    CONSTRAINT fk_distance_start FOREIGN KEY (start_location_id) REFERENCES pickup_location(pickup_location_id) ON DELETE CASCADE,
+    CONSTRAINT fk_distance_end FOREIGN KEY (end_location_id) REFERENCES destination_location(destination_location_id) ON DELETE CASCADE
 );
