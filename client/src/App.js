@@ -28,6 +28,7 @@ function App() {
   const [showTimeDropdown, setShowTimeDropdown] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
+  const [showBurgerMenu, setShowBurgerMenu] = useState(false);
   const [newUserName, setNewUserName] = useState("");
   const [startingBalance, setStartingBalance] = useState("1000");
   const [balanceAdjustment, setBalanceAdjustment] = useState("");
@@ -314,19 +315,59 @@ function App() {
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white text-gray-800">
       {/* Navbar */}
       <header className="bg-gradient-to-r from-purple-700 to-purple-600 text-white shadow-md p-5 pb-8 flex justify-between items-center rounded-b-3xl">
-        <div className="position-left flex items-center gap-6">
+        <div className="position-left flex items-center gap-0">
+          {/* Burger Menu - visible on small screens */}
+          <div className="relative lg:hidden">
+            <button
+              onClick={() => setShowBurgerMenu(!showBurgerMenu)}
+              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            
+            {/* Burger Menu Dropdown */}
+            {showBurgerMenu && (
+              <div className="absolute top-full left-0 mt-2 bg-white text-gray-800 rounded-lg shadow-lg py-2 z-50 min-w-[200px]">
+                <button
+                  onClick={() => {
+                    handleInitDatabase();
+                    setShowBurgerMenu(false);
+                  }}
+                  disabled={loading}
+                  className="w-full text-left px-4 py-2 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Processing…" : "Initialize Schema"}
+                </button>
+                <button
+                  onClick={() => {
+                    handleInsertData();
+                    setShowBurgerMenu(false);
+                  }}
+                  disabled={loading}
+                  className="w-full text-left px-4 py-2 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Processing…" : "Load Demo Data"}
+                </button>
+              </div>
+            )}
+          </div>
+          
           <h1 className="text-3xl font-bold tracking-wide pl-2">CarConnect</h1>
+          
+          {/* Desktop buttons - hidden on small screens */}
           <button
               onClick={handleInitDatabase}
               disabled={loading}
-              className="capitalize font-medium hover:opacity-80 ml-4 pt-4"
+              className="hidden lg:block capitalize font-medium hover:opacity-80 ml-4 pt-4"
             >
               {loading ? "Processing…" : "Initialize Schema"}
           </button>
           <button
               onClick={handleInsertData}
               disabled={loading}
-              className="capitalize font-medium hover:opacity-80 pt-4"
+              className="hidden lg:block capitalize font-medium hover:opacity-80 pt-4"
             >
               {loading ? "Processing…" : "Load Demo Data"}
           </button>
@@ -565,36 +606,6 @@ function App() {
                   {loading ? "Processing..." : "Book Ride"}
                 </button>
               </form>
-
-              {/* SYSTEM CONNECTIVITY STATUS: WILL DELETE THIS IN THE FUTURE */}
-              <div>
-                <h2 className="text-2xl font-semibold text-black mb-4 pt-10">
-                  System Connectivity
-                </h2>
-                <div className="space-y-3">
-                  <div className="flex justify-between p-4 bg-gray-50 rounded-lg">
-                    <span className="font-medium text-gray-700">
-                      Server Connection
-                    </span>
-                    <span className="text-sm">{backendStatus}</span>
-                  </div>
-                  <div className="flex justify-between p-4 bg-gray-50 rounded-lg">
-                    <span className="font-medium text-gray-700">
-                      Database Link
-                    </span>
-                    <span className="text-sm">{dbStatus}</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    checkConnections();
-                    fetchDropdownData();
-                  }}
-                  className="mt-6 w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  Refresh All Data
-                </button>
-              </div>
             </div>
             </div>
           </div>
@@ -704,47 +715,6 @@ function App() {
                   className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 disabled:bg-gray-400"
                 >
                   {loading ? "Creating..." : "Create Account"}
-                </button>
-              </div>
-            </div>
-
-            {/* System Configuration */}
-            <h2 className="text-2xl font-semibold text-black mb-4 mt-12">
-              System Configuration
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Initialize or refresh your database schema and load demo data.
-            </p>
-            <div className="grid sm:grid-cols-2 gap-6">
-              <div className="bg-purple-50 p-6 rounded-2xl border border-purple-200">
-                <h3 className="font-semibold text-black mb-3">
-                  Step 1: Initialize Schema
-                </h3>
-                <p className="text-sm text-gray-700 mb-4">
-                  Drops existing tables and rebuilds structure from scratch.
-                </p>
-                <button
-                  onClick={handleInitDatabase}
-                  disabled={loading}
-                  className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 disabled:bg-gray-400"
-                >
-                  {loading ? "Processing…" : "Initialize Schema"}
-                </button>
-              </div>
-
-              <div className="bg-purple-50 p-6 rounded-2xl border border-purple-200">
-                <h3 className="font-semibold text-black mb-3">
-                  Step 2: Load Demo Data
-                </h3>
-                <p className="text-sm text-gray-700 mb-4">
-                  Populates tables with sample users, drivers, and rides.
-                </p>
-                <button
-                  onClick={handleInsertData}
-                  disabled={loading}
-                  className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 disabled:bg-gray-400"
-                >
-                  {loading ? "Processing…" : "Load Demo Data"}
                 </button>
               </div>
             </div>
