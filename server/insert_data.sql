@@ -49,7 +49,7 @@ INSERT INTO app_user (user_id, name) VALUES
 
 -- ONE user bank account for transaction testing
 INSERT INTO bank_account (account_id, user_id, driver_id, account_type, balance) VALUES
-(1, 1, NULL, 'app_user', 1500.00);
+(1, 1, NULL, 'app_user', 200.00);
 
 -- Driver Bank Accounts only (for testing driver queries)
 INSERT INTO bank_account (account_id, user_id, driver_id, account_type, balance) VALUES

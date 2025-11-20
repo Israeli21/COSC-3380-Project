@@ -314,7 +314,24 @@ function App() {
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white text-gray-800">
       {/* Navbar */}
       <header className="bg-gradient-to-r from-purple-700 to-purple-600 text-white shadow-md p-5 pb-8 flex justify-between items-center rounded-b-3xl">
-        <h1 className="text-3xl font-bold tracking-wide pl-2">CarConnect</h1>
+        <div className="position-left flex items-center gap-6">
+          <h1 className="text-3xl font-bold tracking-wide pl-2">CarConnect</h1>
+          <button
+              onClick={handleInitDatabase}
+              disabled={loading}
+              className="capitalize font-medium hover:opacity-80 ml-4 pt-4"
+            >
+              {loading ? "Processing…" : "Initialize Schema"}
+          </button>
+          <button
+              onClick={handleInsertData}
+              disabled={loading}
+              className="capitalize font-medium hover:opacity-80 pt-4"
+            >
+              {loading ? "Processing…" : "Load Demo Data"}
+          </button>
+        </div>
+        
         <div className="flex items-center gap-8">
           <nav className="space-x-6">
             {[
