@@ -25,6 +25,7 @@ function App() {
   
   // User account management
   const [users, setUsers] = useState([]);
+  const [showTimeDropdown, setShowTimeDropdown] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [newUserName, setNewUserName] = useState("");
@@ -496,16 +497,46 @@ function App() {
                       className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400"
                     />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 relative">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Time
                     </label>
-                    <input
-                      type="time"
-                      value={rideForm.rideTime}
-                      onChange={(e) => setRideForm({...rideForm, rideTime: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400"
-                    />
+                    <div 
+                      onClick={() => setShowTimeDropdown(!showTimeDropdown)}
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400 cursor-pointer bg-white"
+                    >
+                      {rideForm.rideTime ? (() => {
+                        const [h, m] = rideForm.rideTime.split(':');
+                        const hour24 = parseInt(h);
+                        const displayHour = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+                        const period = hour24 < 12 ? 'AM' : 'PM';
+                        return `${displayHour}:${m} ${period}`;
+                      })() : 'Select time'}
+                    </div>
+                    {showTimeDropdown && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                        {Array.from({ length: 96 }, (_, i) => {
+                          const hours = Math.floor(i / 4);
+                          const minutes = (i % 4) * 15;
+                          const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                          const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+                          const period = hours < 12 ? 'AM' : 'PM';
+                          const displayTime = `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+                          return (
+                            <div
+                              key={timeStr}
+                              onClick={() => {
+                                setRideForm({...rideForm, rideTime: timeStr});
+                                setShowTimeDropdown(false);
+                              }}
+                              className="px-4 py-3 hover:bg-purple-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                            >
+                              {displayTime}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
 
