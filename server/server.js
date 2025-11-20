@@ -132,9 +132,18 @@ app.post('/api/book-ride', async (req, res) => {
   const startTime = Date.now();
   const client = await pool.connect();
   try {
-    const { user_id, driver_id, pickup_location_id, destination_location_id, ride_date, ride_time } = req.body;
+    const { user_id, pickup_location_id, destination_location_id, ride_date, ride_time } = req.body;
     
     await client.query('BEGIN');
+    
+    // Check user exists
+    const userResult = await client.query(
+      'SELECT user_id FROM app_user WHERE user_id = $1',
+      [user_id]
+    );
+    if (userResult.rows.length === 0) {
+      throw new Error('Selected user does not exist');
+    }
     
     // Get distance from location_distance table
     const distanceResult = await client.query(
@@ -178,6 +187,39 @@ app.post('/api/book-ride', async (req, res) => {
     if (userBalance < total) {
       throw new Error(`Insufficient funds. Balance: $${userBalance}, Required: $${total}`);
     }
+    
+    // AUTOMATIC DRIVER SELECTION - Find available driver for requested datetime
+    // Combine ride_date and ride_time to create full timestamp
+    const rideDateTime = `${ride_date} ${ride_time}`;
+    
+    const availableDriverRes = await client.query(
+      `SELECT DISTINCT d.driver_id, d.name
+       FROM driver d
+       JOIN driver_availability da ON d.driver_id = da.driver_id
+       WHERE da.day_of_week = EXTRACT(DOW FROM $1::TIMESTAMP)::INTEGER
+         AND da.start_hour <= EXTRACT(HOUR FROM $1::TIMESTAMP)::INTEGER
+         AND da.end_hour > EXTRACT(HOUR FROM $1::TIMESTAMP)::INTEGER
+         AND da.is_active = TRUE
+         -- Ensure driver is not already booked at this exact date and time
+         AND NOT EXISTS (
+           SELECT 1 FROM ride r
+           JOIN date dt ON r.date_id = dt.date_id
+           JOIN time tm ON r.time_id = tm.time_id
+           WHERE r.driver_id = d.driver_id
+             AND dt.date_value = $2::DATE
+             AND tm.time_value = $3::TIME
+         )
+       ORDER BY d.driver_id ASC
+       LIMIT 1`,
+      [rideDateTime, ride_date, ride_time]
+    );
+    
+    if (availableDriverRes.rows.length === 0) {
+      throw new Error('No drivers available for the selected date and time. Please choose a different time.');
+    }
+    
+    const driver_id = availableDriverRes.rows[0].driver_id;
+    const driverName = availableDriverRes.rows[0].name;
     
     // Handle date - insert if not exists
     let dateResult = await client.query('SELECT date_id FROM date WHERE date_value = $1', [ride_date]);
@@ -241,10 +283,12 @@ app.post('/api/book-ride', async (req, res) => {
     
     res.json({ 
       success: true, 
-      message: `Ride booked successfully! Ride ID: ${rideId}; Distance: ${distanceMiles} miles; Price: $${price}; Total charged: $${total};`,
+      message: `Ride booked successfully! Driver: ${driverName}; Ride ID: ${rideId}; Distance: ${distanceMiles} miles; Price: $${price}; Total charged: $${total}`,
       executionTime: executionTime,
       rideDetails: {
         rideId,
+        driverId: driver_id,
+        driverName,
         distance: distanceMiles,
         price,
         tax,
@@ -1039,6 +1083,122 @@ app.delete('/api/location-distance/:startId/:endId', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: 'Failed to delete feedback: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// GET DRIVER AVAILABILITY STATUS
+app.get('/api/driver-availability', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      `SELECT da.availability_id, da.driver_id, d.name, 
+              da.day_of_week, da.start_hour, da.end_hour, da.is_active,
+              CASE da.day_of_week
+                WHEN 0 THEN 'Sunday'
+                WHEN 1 THEN 'Monday'
+                WHEN 2 THEN 'Tuesday'
+                WHEN 3 THEN 'Wednesday'
+                WHEN 4 THEN 'Thursday'
+                WHEN 5 THEN 'Friday'
+                WHEN 6 THEN 'Saturday'
+              END as day_name
+       FROM driver_availability da
+       JOIN driver d ON da.driver_id = d.driver_id
+       ORDER BY da.driver_id, da.day_of_week, da.start_hour`
+    );
+    
+    res.json({ 
+      success: true, 
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (err) {
+    console.error('Driver availability query error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to query driver availability: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// ADD DRIVER AVAILABILITY SLOT
+app.post('/api/driver-availability', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { driverId, dayOfWeek, startHour, endHour } = req.body;
+    
+    if (driverId === undefined || dayOfWeek === undefined || startHour === undefined || endHour === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: "Driver ID, day of week (0-6), start hour (0-23), and end hour (0-23) are required"
+      });
+    }
+    
+    const result = await client.query(
+      `INSERT INTO driver_availability (driver_id, day_of_week, start_hour, end_hour)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [driverId, dayOfWeek, startHour, endHour]
+    );
+    
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+  } catch (err) {
+    console.error("Add availability error:", err);
+    res.status(500).json({
+      success: false,
+      error: "Failed to add availability: " + err.message
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// TOGGLE DRIVER AVAILABILITY SLOT (activate/deactivate)
+app.patch('/api/driver-availability/:availabilityId', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { availabilityId } = req.params;
+    const { isActive } = req.body;
+    
+    if (isActive === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: "isActive (true/false) is required"
+      });
+    }
+    
+    const result = await client.query(
+      `UPDATE driver_availability
+       SET is_active = $1
+       WHERE availability_id = $2
+       RETURNING *`,
+      [isActive, availabilityId]
+    );
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Availability slot not found"
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+  } catch (err) {
+    console.error("Update availability error:", err);
+    res.status(500).json({
+      success: false,
+      error: "Failed to update availability: " + err.message
     });
   } finally {
     client.release();

@@ -9,16 +9,13 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // Form state for ride request
+  // Form state for ride request 
   const [rideForm, setRideForm] = useState({
     pickupLocationId: "",
     destinationLocationId: "",
-    driverId: "",
     rideDate: "",
     rideTime: "",
-  });
-
-  // Dropdown data from database
+  });  // Dropdown data from database
   const [pickupLocations, setPickupLocations] = useState([]);
   const [destinationLocations, setDestinationLocations] = useState([]);
   const [drivers, setDrivers] = useState([]);
@@ -42,19 +39,20 @@ function App() {
 
   const fetchDropdownData = async () => {
     try {
-      const [pickupRes, destRes, driverRes] = await Promise.all([
+      console.log('Fetching dropdown data...');
+      const [pickupRes, destRes] = await Promise.all([
         fetch("http://localhost:5001/api/pickup-locations"),
         fetch("http://localhost:5001/api/destination-locations"),
-        fetch("http://localhost:5001/api/drivers"),
       ]);
 
       const pickupData = await pickupRes.json();
       const destData = await destRes.json();
-      const driverData = await driverRes.json();
+
+      console.log('Pickup data:', pickupData);
+      console.log('Destination data:', destData);
 
       if (pickupData.success) setPickupLocations(pickupData.data);
       if (destData.success) setDestinationLocations(destData.data);
-      if (driverData.success) setDrivers(driverData.data);
     } catch (error) {
       console.error("Failed to fetch dropdown data:", error);
     }
@@ -267,9 +265,15 @@ function App() {
     }
 
     // Validate form
-    if (!rideForm.pickupLocationId || !rideForm.destinationLocationId || 
-        !rideForm.driverId || !rideForm.rideDate || !rideForm.rideTime) {
-      setMessage("Please fill in all fields");
+    if (!rideForm.pickupLocationId || !rideForm.destinationLocationId || !rideForm.rideDate || !rideForm.rideTime) {
+      setMessage("Please fill in all required fields");
+      setLoading(false);
+      return;
+    }
+    
+    // Validate pickup and destination are different
+    if (rideForm.pickupLocationId === rideForm.destinationLocationId) {
+      setMessage("Pickup and destination must be different locations");
       setLoading(false);
       return;
     }
@@ -282,7 +286,6 @@ function App() {
           user_id: selectedUser.user_id,
           pickup_location_id: parseInt(rideForm.pickupLocationId),
           destination_location_id: parseInt(rideForm.destinationLocationId),
-          driver_id: parseInt(rideForm.driverId),
           ride_date: rideForm.rideDate,
           ride_time: rideForm.rideTime,
         }),
@@ -294,7 +297,6 @@ function App() {
         setRideForm({
           pickupLocationId: "",
           destinationLocationId: "",
-          driverId: "",
           rideDate: "",
           rideTime: "",
         });
@@ -518,25 +520,6 @@ function App() {
                     {destinationLocations.map((loc) => (
                       <option key={loc.destination_location_id} value={loc.destination_location_id}>
                         {loc.address} - {loc.city}, {loc.state}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Driver Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Choose Your Driver
-                  </label>
-                  <select 
-                    value={rideForm.driverId}
-                    onChange={(e) => setRideForm({...rideForm, driverId: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent"
-                  >
-                    <option value="">Select driver</option>
-                    {drivers.map((driver) => (
-                      <option key={driver.driver_id} value={driver.driver_id}>
-                        {driver.name}
                       </option>
                     ))}
                   </select>
