@@ -101,16 +101,15 @@ app.post('/api/insert-data', async (req, res) => {
 app.post('/api/update-balances', async (req, res) => {
   const client = await pool.connect();
   try {
-    // Update user balances to higher amounts
     await client.query(`
-      UPDATE bank_account SET balance = 1500.00 WHERE account_id = 1;
-      UPDATE bank_account SET balance = 2000.00 WHERE account_id = 2;
-      UPDATE bank_account SET balance = 1750.50 WHERE account_id = 3;
-      UPDATE bank_account SET balance = 3000.00 WHERE account_id = 4;
-      UPDATE bank_account SET balance = 1250.75 WHERE account_id = 5;
-      UPDATE bank_account SET balance = 4500.00 WHERE account_id = 6;
-      UPDATE bank_account SET balance = 890.25 WHERE account_id = 7;
-      UPDATE bank_account SET balance = 1750.50 WHERE account_id = 8;
+      UPDATE bank_account SET balance = 500.00 WHERE account_id = 1;
+      UPDATE bank_account SET balance = 300.00 WHERE account_id = 2;
+      UPDATE bank_account SET balance = 250.50 WHERE account_id = 3;
+      UPDATE bank_account SET balance = 300.00 WHERE account_id = 4;
+      UPDATE bank_account SET balance = 250.75 WHERE account_id = 5;
+      UPDATE bank_account SET balance = 500.00 WHERE account_id = 6;
+      UPDATE bank_account SET balance = 90.25 WHERE account_id = 7;
+      UPDATE bank_account SET balance = 50.50 WHERE account_id = 8;
     `);
     
     res.json({ 
@@ -133,7 +132,7 @@ app.post('/api/book-ride', async (req, res) => {
   const startTime = Date.now();
   const client = await pool.connect();
   try {
-    const { user_name, driver_id, pickup_location_id, destination_location_id, ride_date, ride_time } = req.body;
+    const { user_id, driver_id, pickup_location_id, destination_location_id, ride_date, ride_time } = req.body;
     
     // Default price and ride time for now (can be made dynamic later)
     const price = 25.00;
@@ -145,40 +144,13 @@ app.post('/api/book-ride', async (req, res) => {
     
     await client.query('BEGIN');
     
-    // Check if user exists, if not create them
-    let userResult = await client.query(
-      'SELECT user_id FROM app_user WHERE name = $1',
-      [user_name]
-    );
-    
-    let user_id;
-    if (userResult.rows.length === 0) {
-      // Create new user
-      const maxUserId = await client.query('SELECT COALESCE(MAX(user_id), 0) + 1 as next_id FROM app_user');
-      user_id = maxUserId.rows[0].next_id;
-      
-      await client.query(
-        'INSERT INTO app_user (user_id, name) VALUES ($1, $2)',
-        [user_id, user_name]
-      );
-      
-      // Create bank account for new user with $1000 starting balance
-      const maxAccountId = await client.query('SELECT COALESCE(MAX(account_id), 0) + 1 as next_id FROM bank_account');
-      const accountId = maxAccountId.rows[0].next_id;
-      
-      await client.query(
-        'INSERT INTO bank_account (account_id, user_id, driver_id, account_type, balance) VALUES ($1, $2, NULL, $3, $4)',
-        [accountId, user_id, 'app_user', 1000.00]
-      );
-    } else {
-      user_id = userResult.rows[0].user_id;
-    }
-    
     // Check user balance
     const balanceCheck = await client.query(
       'SELECT balance, account_id FROM bank_account WHERE user_id = $1 AND account_type = $2',
       [user_id, 'app_user']
     );
+    
+    console.log('Balance check for user_id:', user_id, 'Result:', balanceCheck.rows);
     
     if (balanceCheck.rows.length === 0) {
       throw new Error('User does not have a bank account');
@@ -541,19 +513,29 @@ app.post('/api/create-user', async (req, res) => {
 
     await client.query('BEGIN');
 
+    // Get next user_id
+    const maxUserId = await client.query('SELECT COALESCE(MAX(user_id), 0) + 1 as next_id FROM app_user');
+    const userId = maxUserId.rows[0].next_id;
+
     // Insert user
     const userResult = await client.query(
-      'INSERT INTO app_user (name) VALUES ($1) RETURNING user_id, name',
-      [name]
+      'INSERT INTO app_user (user_id, name) VALUES ($1, $2) RETURNING user_id, name',
+      [userId, name]
     );
     const newUser = userResult.rows[0];
 
+    // Get next account_id
+    const maxAccountId = await client.query('SELECT COALESCE(MAX(account_id), 0) + 1 as next_id FROM bank_account');
+    const accountId = maxAccountId.rows[0].next_id;
+
     // Create bank account for user
-    await client.query(
-      `INSERT INTO bank_account (user_id, account_type, balance) 
-       VALUES ($1, 'user', $2)`,
-      [newUser.user_id, startingBalance]
+    const bankResult = await client.query(
+      `INSERT INTO bank_account (account_id, user_id, driver_id, account_type, balance) 
+       VALUES ($1, $2, NULL, 'app_user', $3) RETURNING account_id`,
+      [accountId, newUser.user_id, startingBalance]
     );
+    
+    console.log('Created bank account:', bankResult.rows[0], 'for user_id:', newUser.user_id);
 
     await client.query('COMMIT');
 
