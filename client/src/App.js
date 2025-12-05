@@ -314,9 +314,9 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white text-gray-800">
+    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white text-gray-800">
       {/* Navbar */}
-      <header className="bg-gradient-to-r from-purple-700 to-purple-600 text-white shadow-md p-5 pb-8 flex justify-between items-center rounded-b-3xl">
+      <header className="bg-gradient-to-r from-black to-gray-800 text-white shadow-md p-5 pb-8 flex justify-between items-center rounded-b-3xl">
         <div className="position-left flex items-center gap-0">
           {/* Burger Menu - visible on small screens */}
           <div className="relative lg:hidden">
@@ -338,7 +338,7 @@ function App() {
                     setShowBurgerMenu(false);
                   }}
                   disabled={loading}
-                  className="w-full text-left px-4 py-2 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full text-left px-4 py-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? "Processing…" : "Initialize Schema"}
                 </button>
@@ -348,7 +348,7 @@ function App() {
                     setShowBurgerMenu(false);
                   }}
                   disabled={loading}
-                  className="w-full text-left px-4 py-2 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full text-left px-4 py-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? "Processing…" : "Load Demo Data"}
                 </button>
@@ -426,12 +426,12 @@ function App() {
                       <button
                         key={user.user_id}
                         onClick={() => handleUserSelect(user)}
-                        className={`w-full text-left px-4 py-2 hover:bg-purple-50 transition-colors ${
-                          selectedUser?.user_id === user.user_id ? 'bg-purple-100' : ''
+                        className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
+                          selectedUser?.user_id === user.user_id ? 'bg-gray-100' : ''
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-semibold">
+                          <div className="w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center text-sm font-semibold">
                             {user.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
@@ -496,7 +496,7 @@ function App() {
                   <select
                     value={rideForm.pickupLocationId}
                     onChange={(e) => setRideForm({...rideForm, pickupLocationId: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-gray-400 focus:border-transparent"
                   >
                     <option value="">Select pickup location</option>
                     {pickupLocations.map((loc) => (
@@ -514,7 +514,7 @@ function App() {
                   <select
                     value={rideForm.destinationLocationId}
                     onChange={(e) => setRideForm({...rideForm, destinationLocationId: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-gray-400 focus:border-transparent"
                   >
                     <option value="">Select destination</option>
                     {destinationLocations.map((loc) => (
@@ -535,7 +535,7 @@ function App() {
                       type="date"
                       value={rideForm.rideDate}
                       onChange={(e) => setRideForm({...rideForm, rideDate: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400"
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-gray-400"
                     />
                   </div>
                   <div className="flex-1 relative">
@@ -544,7 +544,7 @@ function App() {
                     </label>
                     <div 
                       onClick={() => setShowTimeDropdown(!showTimeDropdown)}
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400 cursor-pointer bg-white"
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-gray-400 cursor-pointer bg-white"
                     >
                       {rideForm.rideTime ? (() => {
                         const [h, m] = rideForm.rideTime.split(':');
@@ -570,7 +570,7 @@ function App() {
                                 setRideForm({...rideForm, rideTime: timeStr});
                                 setShowTimeDropdown(false);
                               }}
-                              className="px-4 py-3 hover:bg-purple-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                              className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                             >
                               {displayTime}
                             </div>
@@ -584,7 +584,7 @@ function App() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="mt-4 w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 disabled:bg-gray-400"
+                  className="mt-4 w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 disabled:bg-gray-400"
                 >
                   {loading ? "Processing..." : "Book Ride"}
                 </button>
@@ -606,7 +606,7 @@ function App() {
               <div className="bg-white rounded-2xl shadow-md p-8 mb-8">
                 <h3 className="text-xl font-semibold text-gray-800 mb-4">Current Account</h3>
                 <div className="flex items-center gap-6 mb-6">
-                  <div className="w-20 h-20 rounded-full bg-purple-600 text-white flex items-center justify-center text-3xl font-bold">
+                  <div className="w-20 h-20 rounded-full bg-gray-600 text-white flex items-center justify-center text-3xl font-bold">
                     {selectedUser.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
@@ -632,7 +632,7 @@ function App() {
                         placeholder="Enter amount"
                         min="0"
                         step="0.01"
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400"
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-gray-400"
                       />
                     </div>
                     <button
@@ -675,7 +675,7 @@ function App() {
                     value={newUserName}
                     onChange={(e) => setNewUserName(e.target.value)}
                     placeholder="Enter your name"
-                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400"
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
                 <div>
@@ -689,13 +689,13 @@ function App() {
                     placeholder="1000"
                     min="0"
                     step="0.01"
-                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-400"
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
                 <button
                   onClick={handleCreateUser}
                   disabled={loading}
-                  className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 disabled:bg-gray-400"
+                  className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 disabled:bg-gray-400"
                 >
                   {loading ? "Creating..." : "Create Account"}
                 </button>
@@ -724,7 +724,7 @@ function App() {
                   key={query}
                   onClick={() => handleRunQuery(query)}
                   disabled={loading}
-                  className="p-5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:bg-gray-400 text-left shadow-sm"
+                  className="p-5 bg-black text-white rounded-xl hover:bg-gray-800 disabled:bg-gray-400 text-left shadow-sm"
                 >
                   <h3 className="font-semibold text-lg">{title}</h3>
                   <p className="text-sm mt-1 opacity-90">{desc}</p>
@@ -736,10 +736,10 @@ function App() {
             {queryResults && (
               <div className="mt-8">
                 <h3 className="text-xl font-semibold text-black mb-4">Query Results</h3>
-                <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-purple-100">
+                <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-purple-50">
+                      <thead className="bg-gray-50">
                         <tr>
                           {queryResults.length > 0 && Object.keys(queryResults[0]).map((key) => (
                             <th key={key} className="px-4 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
@@ -748,9 +748,9 @@ function App() {
                           ))}
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-purple-100">
+                      <tbody className="bg-white divide-y divide-gray-100">
                         {queryResults.map((row, index) => (
-                          <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-purple-25'}>
+                          <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}>
                             {Object.values(row).map((value, i) => (
                               <td key={i} className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {typeof value === 'number' && value % 1 !== 0 
@@ -771,7 +771,7 @@ function App() {
 
         {/* MESSAGES + RESULTS - Hide query messages on non-reports tabs */}
         {message && !(activeTab !== 'reports' && message.toLowerCase().includes('returned')) && (
-          <div className="mt-6 bg-gray-50 text-black border border-purple-200 p-4 rounded-xl">
+          <div className="mt-6 bg-gray-50 text-black border border-gray-200 p-4 rounded-xl">
             {message}
           </div>
         )}
