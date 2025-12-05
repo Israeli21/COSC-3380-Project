@@ -654,14 +654,6 @@ function App() {
               </div>
             )}
 
-            {!selectedUser && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
-                <p className="text-yellow-800">
-                  Please select an account from the top-right menu to view and manage balance.
-                </p>
-              </div>
-            )}
-
             {/* Create New User Section */}
             <div className="bg-white rounded-2xl shadow-md p-8 mb-8">
               <h3 className="text-xl font-semibold text-gray-800 mb-4">Create New Account</h3>
