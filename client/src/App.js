@@ -314,7 +314,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white text-gray-800">
+    <div className="min-h-screen bg-gradient-to-b from-blue-200 to-white text-gray-800">
       {/* Navbar */}
       <header className="bg-gradient-to-r from-black to-gray-800 text-white shadow-md p-5 pb-8 flex justify-between items-center rounded-b-3xl">
         <div className="position-left flex items-center gap-0">
