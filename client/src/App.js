@@ -467,7 +467,7 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto mt-10 bg-white/80 backdrop-blur-md shadow-xl rounded-3xl p-8">
+      <main className="max-w-6xl mx-auto mt-10 bg-white shadow-xl rounded-3xl p-8">
         {/* HOME: REQUEST A RIDE */}
         {activeTab === "home" && (
           <div>

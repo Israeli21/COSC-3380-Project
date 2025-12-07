@@ -149,4 +149,120 @@ router.delete('/api/driver-availability/:driverId/:dateId/:timeId', async (req, 
   }
 });
 
+// GET DRIVER AVAILABILITY STATUS
+router.get('/api/driver-availability', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      `SELECT da.availability_id, da.driver_id, d.name, 
+              da.day_of_week, da.start_hour, da.end_hour, da.is_active,
+              CASE da.day_of_week
+                WHEN 0 THEN 'Sunday'
+                WHEN 1 THEN 'Monday'
+                WHEN 2 THEN 'Tuesday'
+                WHEN 3 THEN 'Wednesday'
+                WHEN 4 THEN 'Thursday'
+                WHEN 5 THEN 'Friday'
+                WHEN 6 THEN 'Saturday'
+              END as day_name
+       FROM driver_availability da
+       JOIN driver d ON da.driver_id = d.driver_id
+       ORDER BY da.driver_id, da.day_of_week, da.start_hour`
+    );
+    
+    res.json({ 
+      success: true, 
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (err) {
+    console.error('Driver availability query error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to query driver availability: ' + err.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// ADD DRIVER AVAILABILITY SLOT
+router.post('/api/driver-availability', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { driverId, dayOfWeek, startHour, endHour } = req.body;
+    
+    if (driverId === undefined || dayOfWeek === undefined || startHour === undefined || endHour === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: "Driver ID, day of week (0-6), start hour (0-23), and end hour (0-23) are required"
+      });
+    }
+    
+    const result = await client.query(
+      `INSERT INTO driver_availability (driver_id, day_of_week, start_hour, end_hour)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [driverId, dayOfWeek, startHour, endHour]
+    );
+    
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+  } catch (err) {
+    console.error("Add availability error:", err);
+    res.status(500).json({
+      success: false,
+      error: "Failed to add availability: " + err.message
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// TOGGLE DRIVER AVAILABILITY SLOT (activate/deactivate)
+router.patch('/api/driver-availability/:availabilityId', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { availabilityId } = req.params;
+    const { isActive } = req.body;
+    
+    if (isActive === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: "isActive (true/false) is required"
+      });
+    }
+    
+    const result = await client.query(
+      `UPDATE driver_availability
+       SET is_active = $1
+       WHERE availability_id = $2
+       RETURNING *`,
+      [isActive, availabilityId]
+    );
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Availability slot not found"
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+  } catch (err) {
+    console.error("Update availability error:", err);
+    res.status(500).json({
+      success: false,
+      error: "Failed to update availability: " + err.message
+    });
+  } finally {
+    client.release();
+  }
+});
+
 module.exports = router;
