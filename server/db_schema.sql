@@ -114,36 +114,6 @@ CREATE TABLE driver_availability (
     CONSTRAINT fk_availability_driver FOREIGN KEY (driver_id) REFERENCES driver(driver_id) ON DELETE CASCADE
 );
 
--- Create index for faster lookups
-CREATE INDEX idx_driver_availability_lookup ON driver_availability(driver_id, day_of_week, is_active);
-
--- Helper function to check if driver is available at a specific datetime
-CREATE OR REPLACE FUNCTION is_driver_available(
-    p_driver_id INTEGER,
-    p_datetime TIMESTAMP
-) RETURNS BOOLEAN AS $$
-DECLARE
-    v_day_of_week INTEGER;
-    v_hour INTEGER;
-    v_count INTEGER;
-BEGIN
-    -- Extract day of week (0-6) and hour from datetime
-    v_day_of_week := EXTRACT(DOW FROM p_datetime)::INTEGER;
-    v_hour := EXTRACT(HOUR FROM p_datetime)::INTEGER;
-    
-    -- Check if driver has availability for this day/time
-    SELECT COUNT(*) INTO v_count
-    FROM driver_availability
-    WHERE driver_id = p_driver_id
-      AND day_of_week = v_day_of_week
-      AND start_hour <= v_hour
-      AND end_hour > v_hour
-      AND is_active = TRUE;
-    
-    RETURN v_count > 0;
-END;
-$$ LANGUAGE plpgsql;
-
 CREATE TABLE user_favorite_location (
     user_id INTEGER NOT NULL,
     pickup_location_id INTEGER NOT NULL,
