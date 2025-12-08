@@ -228,7 +228,7 @@ app.get('/api/payments', async (req, res) => {
 app.get('/api/pickup-locations', async (req, res) => {
   const client = await pool.connect();
   try {
-    const result = await client.query('SELECT * FROM pickup_location ORDER BY pickup_location_id');
+    const result = await client.query('SELECT * FROM location ORDER BY location_id');
     res.json({ 
       success: true, 
       data: result.rows,
@@ -249,7 +249,7 @@ app.get('/api/pickup-locations', async (req, res) => {
 app.get('/api/destination-locations', async (req, res) => {
   const client = await pool.connect();
   try {
-    const result = await client.query('SELECT * FROM destination_location ORDER BY destination_location_id');
+    const result = await client.query('SELECT * FROM location ORDER BY location_id');
     res.json({ 
       success: true, 
       data: result.rows,

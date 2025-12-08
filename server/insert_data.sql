@@ -1,27 +1,6 @@
 -- insert_data.sql: populating the database with sample/test data
 -- Fills our empty database with sample data
 
--- LOCATIONS (8 rows for each location type)
-INSERT INTO pickup_location (pickup_location_id, address, city, state, zip_code, country) VALUES
-(1, 'UH Main Campus', 'Houston', 'TX', '77004', 'USA'),
-(2, 'Houston Museum of Fine Arts', 'Houston', 'TX', '77004', 'USA'),
-(3, 'Pho Barr', 'Houston', 'TX', '77054', 'USA'),
-(4, 'Rice University', 'Houston', 'TX', '77024', 'USA'),
-(5, 'Memorial City Mall', 'Houston', 'TX', '77084', 'USA'),
-(6, 'Galleria', 'Houston', 'TX', '77027', 'USA'),
-(7, 'Downtown Houston', 'Houston', 'TX', '77056', 'USA'),
-(8, 'Methodist Hospital', 'Houston', 'TX', '77054', 'USA');
-
-INSERT INTO destination_location (destination_location_id, address, city, state, zip_code, country) VALUES
-(1, 'UH Main Campus', 'Houston', 'TX', '77004', 'USA'),
-(2, 'Houston Museum of Fine Arts', 'Houston', 'TX', '77004', 'USA'),
-(3, 'Pho Barr', 'Houston', 'TX', '77054', 'USA'),
-(4, 'Rice University', 'Houston', 'TX', '77024', 'USA'),
-(5, 'Memorial City Mall', 'Houston', 'TX', '77084', 'USA'),
-(6, 'Galleria', 'Houston', 'TX', '77027', 'USA'),
-(7, 'Downtown Houston', 'Houston', 'TX', '77056', 'USA'),
-(8, 'Methodist Hospital', 'Houston', 'TX', '77054', 'USA');
-
 -- DRIVERS
 INSERT INTO driver (driver_id, name, email, phone, license_number) VALUES
 (1, 'David Johnson', 'david.j@driver.com', '713-555-0201', 'TX-DL-123456'),
@@ -30,6 +9,17 @@ INSERT INTO driver (driver_id, name, email, phone, license_number) VALUES
 (4, 'Jennifer Lee', 'jennifer.l@driver.com', '713-555-0204', 'TX-DL-456789'),
 (5, 'Chris Davis', 'chris.d@driver.com', '281-555-0205', 'TX-DL-567890'),
 (6, 'Amanda White', 'amanda.w@driver.com', '713-555-0206', 'TX-DL-678901');
+
+-- LOCATIONS (8 rows)
+INSERT INTO location (location_id, name, address, city, state, zip_code, country) VALUES
+(1, 'UH Main Campus', '4800 Calhoun Rd', 'Houston', 'TX', '77004', 'USA'),
+(2, 'Houston Museum of Fine Arts', '1001 Bissonnet St', 'Houston', 'TX', '77005', 'USA'),
+(3, 'Pho Barr', '9889 Bellaire Blvd', 'Houston', 'TX', '77036', 'USA'),
+(4, 'Rice University', '6100 Main St', 'Houston', 'TX', '77005', 'USA'),
+(5, 'Memorial City Mall', '303 Memorial City Way', 'Houston', 'TX', '77024', 'USA'),
+(6, 'Galleria', '5085 Westheimer Rd', 'Houston', 'TX', '77056', 'USA'),
+(7, 'Downtown Houston', '901 Bagby St', 'Houston', 'TX', '77002', 'USA'),
+(8, 'Methodist Hospital', '6565 Fannin St', 'Houston', 'TX', '77030', 'USA');
 
 -- DRIVER AVAILABILITY (Weekly Schedules)
 -- Format: driver_id, day_of_week (0=Sun,1=Mon,...,6=Sat), start_hour (0-23), end_hour (0-23)

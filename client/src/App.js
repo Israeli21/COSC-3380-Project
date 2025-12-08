@@ -500,7 +500,7 @@ function App() {
                   >
                     <option value="">Select pickup location</option>
                     {pickupLocations.map((loc) => (
-                      <option key={loc.pickup_location_id} value={loc.pickup_location_id}>
+                      <option key={loc.location_id} value={loc.location_id}>
                         {loc.address} - {loc.city}, {loc.state}
                       </option>
                     ))}
@@ -518,7 +518,7 @@ function App() {
                   >
                     <option value="">Select destination</option>
                     {destinationLocations.map((loc) => (
-                      <option key={loc.destination_location_id} value={loc.destination_location_id}>
+                      <option key={loc.location_id} value={loc.location_id}>
                         {loc.address} - {loc.city}, {loc.state}
                       </option>
                     ))}

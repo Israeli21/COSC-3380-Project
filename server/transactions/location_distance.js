@@ -51,8 +51,8 @@ router.get('/api/location-distances', async (req, res) => {
               pl.address as start_address, pl.city as start_city,
               dl.address as end_address, dl.city as end_city
        FROM location_distance ld
-       JOIN pickup_location pl ON ld.start_location_id = pl.pickup_location_id
-       JOIN destination_location dl ON ld.end_location_id = dl.destination_location_id
+       JOIN location pl ON ld.start_location_id = pl.location_id
+       JOIN location dl ON ld.end_location_id = dl.location_id
        ORDER BY ld.start_location_id, ld.end_location_id`
     );
 

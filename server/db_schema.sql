@@ -1,7 +1,6 @@
 DROP TABLE IF EXISTS app_user CASCADE;
-DROP TABLE IF EXISTS pickup_location CASCADE;
-DROP TABLE IF EXISTS destination_location CASCADE;
 DROP TABLE IF EXISTS driver CASCADE;
+DROP TABLE IF EXISTS location CASCADE;
 DROP TABLE IF EXISTS date CASCADE;
 DROP TABLE IF EXISTS time CASCADE;
 DROP TABLE IF EXISTS ride CASCADE;
@@ -17,24 +16,14 @@ CREATE TABLE app_user (
     name VARCHAR(100) NOT NULL
 );
 
-SELECT * FROM app_user;
-
-CREATE TABLE pickup_location (
-    pickup_location_id INTEGER PRIMARY KEY,
+CREATE TABLE location (
+    location_id INTEGER PRIMARY KEY,
+    name VARCHAR(255),
     address VARCHAR(255) NOT NULL,
     city VARCHAR(100) NOT NULL,
-    state VARCHAR(100),
+    state VARCHAR(100) DEFAULT 'TX',
     zip_code VARCHAR(20),
-    country VARCHAR(100) NOT NULL DEFAULT 'USA'
-);
-
-CREATE TABLE destination_location (
-    destination_location_id INTEGER PRIMARY KEY,
-    address VARCHAR(255) NOT NULL,
-    city VARCHAR(100) NOT NULL,
-    state VARCHAR(100),
-    zip_code VARCHAR(20),
-    country VARCHAR(100) NOT NULL DEFAULT 'USA'
+    country VARCHAR(100) DEFAULT 'USA'
 );
 
 CREATE TABLE date (
@@ -70,8 +59,8 @@ CREATE TABLE ride (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_ride_user FOREIGN KEY (user_id) REFERENCES app_user(user_id) ON DELETE RESTRICT,
     CONSTRAINT fk_ride_driver FOREIGN KEY (driver_id) REFERENCES driver(driver_id) ON DELETE RESTRICT,
-    CONSTRAINT fk_ride_pickup FOREIGN KEY (pickup_location_id) REFERENCES pickup_location(pickup_location_id) ON DELETE RESTRICT,
-    CONSTRAINT fk_ride_destination FOREIGN KEY (destination_location_id) REFERENCES destination_location(destination_location_id) ON DELETE RESTRICT,
+    CONSTRAINT fk_ride_pickup FOREIGN KEY (pickup_location_id) REFERENCES location(location_id) ON DELETE RESTRICT,
+    CONSTRAINT fk_ride_destination FOREIGN KEY (destination_location_id) REFERENCES location(location_id) ON DELETE RESTRICT,
     CONSTRAINT fk_ride_date FOREIGN KEY (date_id) REFERENCES date(date_id) ON DELETE RESTRICT,
     CONSTRAINT fk_ride_time FOREIGN KEY (time_id) REFERENCES time(time_id) ON DELETE RESTRICT
 );
@@ -118,12 +107,12 @@ CREATE TABLE driver_availability (
 
 CREATE TABLE user_favorite_location (
     user_id INTEGER NOT NULL,
-    pickup_location_id INTEGER NOT NULL,
+    location_id INTEGER NOT NULL,
     nickname VARCHAR(100),
     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, pickup_location_id),
+    PRIMARY KEY (user_id, location_id),
     CONSTRAINT fk_favorite_user FOREIGN KEY (user_id) REFERENCES app_user(user_id) ON DELETE CASCADE,
-    CONSTRAINT fk_favorite_location FOREIGN KEY (pickup_location_id) REFERENCES pickup_location(pickup_location_id) ON DELETE CASCADE
+    CONSTRAINT fk_favorite_location FOREIGN KEY (location_id) REFERENCES location(location_id) ON DELETE CASCADE
 );
 
 CREATE TABLE location_distance (
@@ -131,6 +120,6 @@ CREATE TABLE location_distance (
     end_location_id INTEGER NOT NULL,
     distance_miles DECIMAL(5, 2) NOT NULL,
     PRIMARY KEY (start_location_id, end_location_id),
-    CONSTRAINT fk_distance_start FOREIGN KEY (start_location_id) REFERENCES pickup_location(pickup_location_id) ON DELETE CASCADE,
-    CONSTRAINT fk_distance_end FOREIGN KEY (end_location_id) REFERENCES destination_location(destination_location_id) ON DELETE CASCADE
+    CONSTRAINT fk_distance_start FOREIGN KEY (start_location_id) REFERENCES location(location_id) ON DELETE CASCADE,
+    CONSTRAINT fk_distance_end FOREIGN KEY (end_location_id) REFERENCES location(location_id) ON DELETE CASCADE
 );
