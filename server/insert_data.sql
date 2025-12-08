@@ -1,9 +1,7 @@
 -- insert_data.sql: populating the database with sample/test data
 -- Fills our empty database with sample data
 
--- ============================================
 -- LOCATIONS (8 rows for each location type)
--- ============================================
 INSERT INTO pickup_location (pickup_location_id, address, city, state, zip_code, country) VALUES
 (1, 'UH Main Campus', 'Houston', 'TX', '77004', 'USA'),
 (2, 'Houston Museum of Fine Arts', 'Houston', 'TX', '77004', 'USA'),
@@ -110,9 +108,7 @@ INSERT INTO bank_account (account_id, user_id, driver_id, account_type, balance)
 (6, NULL, 5, 'driver', 2900.00),
 (7, NULL, 6, 'driver', 3500.00);
 
--- ============================================
 -- LOCATION DISTANCES (Composite Key Table)
--- ============================================
 INSERT INTO location_distance (start_location_id, end_location_id, distance_miles) VALUES
     (1, 1, 0),
     (1, 2, 3),

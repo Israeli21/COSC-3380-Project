@@ -706,22 +706,34 @@ function App() {
               Generate system reports and analyze ride, user, and driver data.
             </p>
             <div className="grid sm:grid-cols-2 gap-4">
-              {[
-                ["ride-history", "Ride History (Transactions)", "View all rides with users, drivers, and locations."],
-                ["user-spending", "User Spending", "Total spending and balance per user."],
-                ["driver-earnings", "Driver Performance", "Earnings and performance data per driver."],
-                ["payment-audit", "Payment Audit", "Full payment transaction logs and summaries."]
-              ].map(([query, title, desc]) => (
-                <button
-                  key={query}
-                  onClick={() => handleRunQuery(query)}
-                  disabled={loading}
-                  className="p-5 bg-black text-white rounded-xl hover:bg-gray-800 disabled:bg-gray-400 text-left shadow-sm"
-                >
-                  <h3 className="font-semibold text-lg">{title}</h3>
-                  <p className="text-sm mt-1 opacity-90">{desc}</p>
-                </button>
-              ))}
+              <div className="col-1">
+                {[
+                  ["ride-history", "Ride History (Transactions)", "View all rides with users, drivers, and locations."],
+                  ["user-spending", "User Spending", "Total spending and balance per user."],
+                  ["driver-earnings", "Driver Performance", "Earnings and performance data per driver."],
+                  ["payment-audit", "Payment Audit", "Full payment transaction logs and summaries."]
+                ].map(([query, title, desc]) => (
+                  <button
+                    key={query}
+                    onClick={() => handleRunQuery(query)}
+                    disabled={loading}
+                    className="w-full p-5 bg-black text-white rounded-xl hover:bg-gray-800 disabled:bg-gray-400 text-left"
+                  >
+                    <h3 className="font-semibold text-lg">{title}</h3>
+                    <p className="text-sm mt-1 opacity-90">{desc}</p>
+                  </button>
+                ))}
+              </div>
+              <div>
+                <p>SQL Query GUI</p>
+                <div>
+                  <input className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-gray-400"></input>
+                </div>
+                <p>app_user(user_id, name)</p>
+                <p>driver(driver_id, name, email, phone, license_number)</p>
+                <p>pickup_location(pickup_location_id, address, city, state, zip_code, country)</p>
+                <p>destination_location(destination_location_id, address, city, state, zip_code, country)</p>
+              </div>
             </div>
 
             {/* Query Results - Only shown in reports tab */}

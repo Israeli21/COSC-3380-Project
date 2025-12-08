@@ -75,6 +75,7 @@ CREATE TABLE ride (
     CONSTRAINT fk_ride_date FOREIGN KEY (date_id) REFERENCES date(date_id) ON DELETE RESTRICT,
     CONSTRAINT fk_ride_time FOREIGN KEY (time_id) REFERENCES time(time_id) ON DELETE RESTRICT
 );
+
 CREATE TABLE bank_account (
     account_id INTEGER PRIMARY KEY,
     user_id INTEGER,
@@ -88,6 +89,7 @@ CREATE TABLE bank_account (
         (account_type = 'driver' AND driver_id IS NOT NULL AND user_id IS NULL)
     )
 );
+
 CREATE TABLE payment (
     payment_id INTEGER PRIMARY KEY,
     ride_id INTEGER NOT NULL UNIQUE,
