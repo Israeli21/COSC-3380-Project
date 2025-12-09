@@ -31,6 +31,8 @@ function App() {
   const [balanceAdjustment, setBalanceAdjustment] = useState("");
   const [userBalance, setUserBalance] = useState(null);
   const [showTables, setShowTables] = useState(true);
+  const [sqlQuery, setSqlQuery] = useState("");
+  const [customQueryResults, setCustomQueryResults] = useState(null);
 
   useEffect(() => {
     checkConnections();
@@ -238,6 +240,7 @@ function App() {
     setLoading(true);
     setMessage("");
     setQueryResults(null);
+    setCustomQueryResults(null);
     try {
       const response = await fetch(
         `http://localhost:5001/api/query/${queryType}`
@@ -247,6 +250,34 @@ function App() {
         setQueryResults(data.results);
         setMessage(`Returned ${data.results.length} rows`);
       } else setMessage(data.error);
+    } catch (error) {
+      setMessage("Error: " + error.message);
+    }
+    setLoading(false);
+  };
+
+  const handleCustomQuery = async () => {
+    if (!sqlQuery.trim()) {
+      setMessage("Please enter a SQL query");
+      return;
+    }
+    setLoading(true);
+    setMessage("");
+    setQueryResults(null);
+    setCustomQueryResults(null);
+    try {
+      const response = await fetch("http://localhost:5001/api/custom-query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: sqlQuery }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setCustomQueryResults(data.results);
+        setMessage(`Query executed successfully. Returned ${data.results.length} rows`);
+      } else {
+        setMessage("Error: " + data.error);
+      }
     } catch (error) {
       setMessage("Error: " + error.message);
     }
@@ -707,7 +738,7 @@ function App() {
               Generate system reports and analyze ride, user, and driver data.
             </p>
             <div className="grid grid-cols-5 gap-6">
-              <div className="col-span-2 space-y-2">
+              <div className="col-span-2 space-y-3">
                 {[
                   ["ride-history", "Ride History (Transactions)", "View all rides with users, drivers, and locations."],
                   ["user-spending", "User Spending", "Total spending and balance per user."],
@@ -726,25 +757,39 @@ function App() {
                 ))}
               </div>
               <div className="col-span-3">
-                <p>SQL Query GUI</p>
-                <div>
-                  <textarea className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-gray-400"></textarea>
+                <p className="text-lg font-semibold text-gray-800 mb-2">SQL Query GUI</p>
+                <div className="mb-3">
+                  <textarea 
+                    value={sqlQuery}
+                    onChange={(e) => setSqlQuery(e.target.value)}
+                    placeholder="Enter your SQL query here... "
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-gray-400 font-mono text-sm"
+                  />
                 </div>
-                {showTables ? (
-                  <button 
-                    onClick={() => setShowTables(false)}
-                    className="p-3 rounded-lg hover:bg-gray-100 border border-black disabled:bg-gray-400 text-left"
+                <div className="flex gap-3 mb-4">
+                  <button
+                    onClick={handleCustomQuery}
+                    disabled={loading}
+                    className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 disabled:bg-gray-400"
                   >
-                    Hide Tables
+                    {loading ? "Executing..." : "Execute Query"}
                   </button>
-                ) : (
-                  <button 
-                    onClick={() => setShowTables(true)}
-                    className="p-3 rounded-lg hover:bg-gray-100 border border-black disabled:bg-gray-400 text-left"
-                  >
-                    Show Tables
-                  </button>
-                )}
+                  {showTables ? (
+                    <button 
+                      onClick={() => setShowTables(false)}
+                      className="p-2 px-4 rounded-lg hover:bg-gray-100 border border-black"
+                    >
+                      Hide Tables
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => setShowTables(true)}
+                      className="p-2 px-4 rounded-lg hover:bg-gray-100 border border-black"
+                    >
+                      Show Tables
+                    </button>
+                  )}
+                </div>
                 {showTables && (
                   <div className="text-sm space-y-2">
                     <p>- app_user(user_id, name)</p>
@@ -754,7 +799,6 @@ function App() {
                     <p>- bank_account(account_id, user_id, driver_id, account_type, balance)</p>
                     <p>- payment(payment_id, ride_id, amount, payment_date, payment_method)</p>
                     <p>- driver_availability(availability_id, driver_id, day_of_week, start_hour, end_hour)</p>
-                    <p>- user_favorite_location(favorite_id, user_id, location_id)</p>
                     <p>- location_distance(start_location_id, end_location_id, distance_miles)</p>
                   </div>
                 )}
@@ -762,6 +806,39 @@ function App() {
             </div>
 
             {/* Query Results - Only shown in reports tab */}
+            {customQueryResults && (
+              <div className="mt-8">
+                <h3 className="text-xl font-semibold text-black mb-4">Custom Query Results</h3>
+                <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          {customQueryResults.length > 0 && Object.keys(customQueryResults[0]).map((key) => (
+                            <th key={key} className="px-4 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
+                              {key.replace(/_/g, ' ')}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-100">
+                        {customQueryResults.map((row, index) => (
+                          <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}>
+                            {Object.values(row).map((value, i) => (
+                              <td key={i} className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {typeof value === 'number' && value % 1 !== 0 
+                                  ? parseFloat(value).toFixed(2) 
+                                  : String(value)}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
             {queryResults && (
               <div className="mt-8">
                 <h3 className="text-xl font-semibold text-black mb-4">Query Results</h3>

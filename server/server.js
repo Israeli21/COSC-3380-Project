@@ -35,6 +35,9 @@ app.get('/api/db-test', async (req, res) => {
 const dbInitRoutes = require('./routes/db_initialization');
 app.use(dbInitRoutes);
 
+const guiQueryRoutes = require('./routes/GUI_queries');
+app.use('/api', guiQueryRoutes);
+
 // UPDATE BALANCES ENDPOINT
 app.post('/api/update-balances', async (req, res) => {
   const client = await pool.connect();
