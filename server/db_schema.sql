@@ -1,8 +1,6 @@
 DROP TABLE IF EXISTS app_user CASCADE;
 DROP TABLE IF EXISTS driver CASCADE;
 DROP TABLE IF EXISTS location CASCADE;
-DROP TABLE IF EXISTS date CASCADE;
-DROP TABLE IF EXISTS time CASCADE;
 DROP TABLE IF EXISTS ride CASCADE;
 DROP TABLE IF EXISTS bank_account CASCADE;
 DROP TABLE IF EXISTS payment CASCADE;
@@ -26,16 +24,6 @@ CREATE TABLE location (
     country VARCHAR(100) DEFAULT 'USA'
 );
 
-CREATE TABLE date (
-    date_id INTEGER PRIMARY KEY,
-    date_value DATE NOT NULL UNIQUE
-);
-
-CREATE TABLE time (
-    time_id INTEGER PRIMARY KEY,
-    time_value TIME NOT NULL UNIQUE
-);
-
 CREATE TABLE driver (
     driver_id INTEGER PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -51,8 +39,8 @@ CREATE TABLE ride (
     driver_id INTEGER NOT NULL,
     pickup_location_id INTEGER NOT NULL,
     destination_location_id INTEGER NOT NULL,
-    date_id INTEGER NOT NULL,
-    time_id INTEGER NOT NULL,
+    ride_date DATE NOT NULL,
+    ride_time TIME NOT NULL,
     price DECIMAL(10, 2) NOT NULL CHECK (price >= 0),
     ride_time_minutes INTEGER NOT NULL CHECK (ride_time_minutes > 0),
     status VARCHAR(20) DEFAULT 'completed',
@@ -60,9 +48,7 @@ CREATE TABLE ride (
     CONSTRAINT fk_ride_user FOREIGN KEY (user_id) REFERENCES app_user(user_id) ON DELETE RESTRICT,
     CONSTRAINT fk_ride_driver FOREIGN KEY (driver_id) REFERENCES driver(driver_id) ON DELETE RESTRICT,
     CONSTRAINT fk_ride_pickup FOREIGN KEY (pickup_location_id) REFERENCES location(location_id) ON DELETE RESTRICT,
-    CONSTRAINT fk_ride_destination FOREIGN KEY (destination_location_id) REFERENCES location(location_id) ON DELETE RESTRICT,
-    CONSTRAINT fk_ride_date FOREIGN KEY (date_id) REFERENCES date(date_id) ON DELETE RESTRICT,
-    CONSTRAINT fk_ride_time FOREIGN KEY (time_id) REFERENCES time(time_id) ON DELETE RESTRICT
+    CONSTRAINT fk_ride_destination FOREIGN KEY (destination_location_id) REFERENCES location(location_id) ON DELETE RESTRICT
 );
 
 CREATE TABLE bank_account (

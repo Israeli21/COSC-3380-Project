@@ -79,11 +79,9 @@ router.post('/api/book-ride', async (req, res) => {
          -- Ensure driver is not already booked at this exact date and time
          AND NOT EXISTS (
            SELECT 1 FROM ride r
-           JOIN date dt ON r.date_id = dt.date_id
-           JOIN time tm ON r.time_id = tm.time_id
            WHERE r.driver_id = d.driver_id
-             AND dt.date_value = $2::DATE
-             AND tm.time_value = $3::TIME
+             AND r.ride_date = $2::DATE
+             AND r.ride_time = $3::TIME
          )
        ORDER BY d.driver_id ASC
        LIMIT 1`,
@@ -97,37 +95,15 @@ router.post('/api/book-ride', async (req, res) => {
     const driver_id = availableDriverRes.rows[0].driver_id;
     const driverName = availableDriverRes.rows[0].name;
     
-    // Handle date - insert if not exists
-    let dateResult = await client.query('SELECT date_id FROM date WHERE date_value = $1', [ride_date]);
-    let date_id;
-    if (dateResult.rows.length === 0) {
-      const maxDateId = await client.query('SELECT COALESCE(MAX(date_id), 0) + 1 as next_id FROM date');
-      date_id = maxDateId.rows[0].next_id;
-      await client.query('INSERT INTO date (date_id, date_value) VALUES ($1, $2)', [date_id, ride_date]);
-    } else {
-      date_id = dateResult.rows[0].date_id;
-    }
-    
-    // Handle time - insert if not exists
-    let timeResult = await client.query('SELECT time_id FROM time WHERE time_value = $1', [ride_time]);
-    let time_id;
-    if (timeResult.rows.length === 0) {
-      const maxTimeId = await client.query('SELECT COALESCE(MAX(time_id), 0) + 1 as next_id FROM time');
-      time_id = maxTimeId.rows[0].next_id;
-      await client.query('INSERT INTO time (time_id, time_value) VALUES ($1, $2)', [time_id, ride_time]);
-    } else {
-      time_id = timeResult.rows[0].time_id;
-    }
-    
     // Get next ride_id
     const maxRideId = await client.query('SELECT COALESCE(MAX(ride_id), 0) + 1 as next_id FROM ride');
     const rideId = maxRideId.rows[0].next_id;
     
     // Insert ride
     await client.query(
-      `INSERT INTO ride (ride_id, user_id, driver_id, pickup_location_id, destination_location_id, date_id, time_id, price, ride_time_minutes, status)
+      `INSERT INTO ride (ride_id, user_id, driver_id, pickup_location_id, destination_location_id, ride_date, ride_time, price, ride_time_minutes, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-      [rideId, user_id, driver_id, pickup_location_id, destination_location_id, date_id, time_id, price, ride_time_minutes, 'completed']
+      [rideId, user_id, driver_id, pickup_location_id, destination_location_id, ride_date, ride_time, price, ride_time_minutes, 'completed']
     );
     
     // Insert payment
