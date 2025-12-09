@@ -11,11 +11,11 @@ router.get('/api/location-distance/:startId/:endId', async (req, res) => {
     
     const result = await client.query(
       `SELECT ld.*, 
-              pl.address as start_address, pl.city as start_city,
-              dl.address as end_address, dl.city as end_city
+              l1.address as start_address, l1.city as start_city,
+              l2.address as end_address, l2.city as end_city
        FROM location_distance ld
-       JOIN pickup_location pl ON ld.start_location_id = pl.pickup_location_id
-       JOIN destination_location dl ON ld.end_location_id = dl.destination_location_id
+       JOIN location l1 ON ld.start_location_id = l1.location_id
+       JOIN location l2 ON ld.end_location_id = l2.location_id
        WHERE ld.start_location_id = $1 AND ld.end_location_id = $2`,
       [startId, endId]
     );
@@ -48,11 +48,11 @@ router.get('/api/location-distances', async (req, res) => {
   try {
     const result = await client.query(
       `SELECT ld.*, 
-              pl.address as start_address, pl.city as start_city,
-              dl.address as end_address, dl.city as end_city
+              l1.address as start_address, l1.city as start_city,
+              l2.address as end_address, l2.city as end_city
        FROM location_distance ld
-       JOIN location pl ON ld.start_location_id = pl.location_id
-       JOIN location dl ON ld.end_location_id = dl.location_id
+       JOIN location l1 ON ld.start_location_id = l1.location_id
+       JOIN location l2 ON ld.end_location_id = l2.location_id
        ORDER BY ld.start_location_id, ld.end_location_id`
     );
 

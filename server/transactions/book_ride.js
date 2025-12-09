@@ -24,7 +24,7 @@ router.post('/api/book-ride', async (req, res) => {
     // Get distance from location_distance table
     const distanceResult = await client.query(
       'SELECT distance_miles FROM location_distance WHERE start_location_id = $1 AND end_location_id = $2',
-      [location_id, location_id]
+      [pickup_location_id, destination_location_id]
     );
     
     if (distanceResult.rows.length === 0) {
