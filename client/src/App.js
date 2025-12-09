@@ -30,6 +30,7 @@ function App() {
   const [startingBalance, setStartingBalance] = useState("1000");
   const [balanceAdjustment, setBalanceAdjustment] = useState("");
   const [userBalance, setUserBalance] = useState(null);
+  const [showTables, setShowTables] = useState(true);
 
   useEffect(() => {
     checkConnections();
@@ -705,8 +706,8 @@ function App() {
             <p className="text-gray-600 mb-6">
               Generate system reports and analyze ride, user, and driver data.
             </p>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="col-1">
+            <div className="grid grid-cols-5 gap-6">
+              <div className="col-span-2 space-y-2">
                 {[
                   ["ride-history", "Ride History (Transactions)", "View all rides with users, drivers, and locations."],
                   ["user-spending", "User Spending", "Total spending and balance per user."],
@@ -724,15 +725,39 @@ function App() {
                   </button>
                 ))}
               </div>
-              <div>
+              <div className="col-span-3">
                 <p>SQL Query GUI</p>
                 <div>
-                  <input className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-gray-400"></input>
+                  <textarea className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-gray-400"></textarea>
                 </div>
-                <p>app_user(user_id, name)</p>
-                <p>driver(driver_id, name, email, phone, license_number)</p>
-                <p>pickup_location(pickup_location_id, address, city, state, zip_code, country)</p>
-                <p>destination_location(destination_location_id, address, city, state, zip_code, country)</p>
+                {showTables ? (
+                  <button 
+                    onClick={() => setShowTables(false)}
+                    className="p-3 rounded-lg hover:bg-gray-100 border border-black disabled:bg-gray-400 text-left"
+                  >
+                    Hide Tables
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => setShowTables(true)}
+                    className="p-3 rounded-lg hover:bg-gray-100 border border-black disabled:bg-gray-400 text-left"
+                  >
+                    Show Tables
+                  </button>
+                )}
+                {showTables && (
+                  <div className="text-sm space-y-2">
+                    <p>- app_user(user_id, name)</p>
+                    <p>- driver(driver_id, name, email, phone, license_number)</p>
+                    <p>- location(location_id, name, address, city, state, zip_code, country)</p>
+                    <p>- ride(ride_id, user_id, driver_id, pickup_id, destination_id, ride_date, ride_time, price, ride_time_min)</p>
+                    <p>- bank_account(account_id, user_id, driver_id, account_type, balance)</p>
+                    <p>- payment(payment_id, ride_id, amount, payment_date, payment_method)</p>
+                    <p>- driver_availability(availability_id, driver_id, day_of_week, start_hour, end_hour)</p>
+                    <p>- user_favorite_location(favorite_id, user_id, location_id)</p>
+                    <p>- location_distance(start_location_id, end_location_id, distance_miles)</p>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -14,6 +14,14 @@ CREATE TABLE app_user (
     name VARCHAR(100) NOT NULL
 );
 
+CREATE TABLE driver (
+    driver_id INTEGER PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    phone VARCHAR(20) NOT NULL,
+    license_number VARCHAR(50) NOT NULL UNIQUE
+);
+
 CREATE TABLE location (
     location_id INTEGER PRIMARY KEY,
     name VARCHAR(255),
@@ -24,31 +32,23 @@ CREATE TABLE location (
     country VARCHAR(100) DEFAULT 'USA'
 );
 
-CREATE TABLE driver (
-    driver_id INTEGER PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    phone VARCHAR(20) NOT NULL,
-    license_number VARCHAR(50) NOT NULL UNIQUE
-);
-
 -- STEP 2: Create child tables (with FK dependencies):
 CREATE TABLE ride (
     ride_id INTEGER PRIMARY KEY,
     user_id INTEGER NOT NULL,
     driver_id INTEGER NOT NULL,
-    pickup_location_id INTEGER NOT NULL,
-    destination_location_id INTEGER NOT NULL,
+    pickup_id INTEGER NOT NULL,
+    destination_id INTEGER NOT NULL,
     ride_date DATE NOT NULL,
     ride_time TIME NOT NULL,
     price DECIMAL(10, 2) NOT NULL CHECK (price >= 0),
-    ride_time_minutes INTEGER NOT NULL CHECK (ride_time_minutes > 0),
+    ride_time_min INTEGER NOT NULL CHECK (ride_time_min > 0),
     status VARCHAR(20) DEFAULT 'completed',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_ride_user FOREIGN KEY (user_id) REFERENCES app_user(user_id) ON DELETE RESTRICT,
     CONSTRAINT fk_ride_driver FOREIGN KEY (driver_id) REFERENCES driver(driver_id) ON DELETE RESTRICT,
-    CONSTRAINT fk_ride_pickup FOREIGN KEY (pickup_location_id) REFERENCES location(location_id) ON DELETE RESTRICT,
-    CONSTRAINT fk_ride_destination FOREIGN KEY (destination_location_id) REFERENCES location(location_id) ON DELETE RESTRICT
+    CONSTRAINT fk_ride_pickup FOREIGN KEY (pickup_id) REFERENCES location(location_id) ON DELETE RESTRICT,
+    CONSTRAINT fk_ride_destination FOREIGN KEY (destination_id) REFERENCES location(location_id) ON DELETE RESTRICT
 );
 
 CREATE TABLE bank_account (
@@ -86,7 +86,6 @@ CREATE TABLE driver_availability (
     day_of_week INTEGER NOT NULL CHECK (day_of_week BETWEEN 0 AND 6), -- 0=Sunday, 1=Monday, ..., 6=Saturday
     start_hour INTEGER NOT NULL CHECK (start_hour BETWEEN 0 AND 23),
     end_hour INTEGER NOT NULL CHECK (end_hour BETWEEN 0 AND 24), -- Allow 24 for midnight/end of day
-    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_availability_driver FOREIGN KEY (driver_id) REFERENCES driver(driver_id) ON DELETE CASCADE
 );

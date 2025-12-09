@@ -8,7 +8,7 @@ router.post('/api/book-ride', async (req, res) => {
   const startTime = Date.now();
   const client = await pool.connect();
   try {
-    const { user_id, pickup_location_id, destination_location_id, ride_date, ride_time } = req.body;
+    const { user_id, pickup_location_id: pickup_id, destination_location_id: destination_id, ride_date, ride_time } = req.body;
     
     await client.query('BEGIN');
     
@@ -24,7 +24,7 @@ router.post('/api/book-ride', async (req, res) => {
     // Get distance from location_distance table
     const distanceResult = await client.query(
       'SELECT distance_miles FROM location_distance WHERE start_location_id = $1 AND end_location_id = $2',
-      [pickup_location_id, destination_location_id]
+      [pickup_id, destination_id]
     );
     
     if (distanceResult.rows.length === 0) {
@@ -39,7 +39,7 @@ router.post('/api/book-ride', async (req, res) => {
     const price = parseFloat((basePrice + (distanceMiles * pricePerMile)).toFixed(2));
     
     // Estimate ride time: assume 30 mph average speed, minimum 5 minutes
-    const ride_time_minutes = Math.max(5, Math.ceil((distanceMiles / 30) * 60));
+    const ride_time_min = Math.max(5, Math.ceil((distanceMiles / 30) * 60));
     
     // Calculate tax (8.25%) and total
     const tax = parseFloat((price * 0.0825).toFixed(2));
@@ -75,7 +75,6 @@ router.post('/api/book-ride', async (req, res) => {
        WHERE da.day_of_week = EXTRACT(DOW FROM $1::TIMESTAMP)::INTEGER
          AND da.start_hour <= EXTRACT(HOUR FROM $1::TIMESTAMP)::INTEGER
          AND da.end_hour > EXTRACT(HOUR FROM $1::TIMESTAMP)::INTEGER
-         AND da.is_active = TRUE
          -- Ensure driver is not already booked at this exact date and time
          AND NOT EXISTS (
            SELECT 1 FROM ride r
@@ -101,9 +100,9 @@ router.post('/api/book-ride', async (req, res) => {
     
     // Insert ride
     await client.query(
-      `INSERT INTO ride (ride_id, user_id, driver_id, pickup_location_id, destination_location_id, ride_date, ride_time, price, ride_time_minutes, status)
+      `INSERT INTO ride (ride_id, user_id, driver_id, pickup_id, destination_id, ride_date, ride_time, price, ride_time_min, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-      [rideId, user_id, driver_id, pickup_location_id, destination_location_id, ride_date, ride_time, price, ride_time_minutes, 'completed']
+      [rideId, user_id, driver_id, pickup_id, destination_id, ride_date, ride_time, price, ride_time_min, 'completed']
     );
     
     // Insert payment
@@ -145,7 +144,7 @@ router.post('/api/book-ride', async (req, res) => {
         price,
         tax,
         total,
-        estimatedTime: ride_time_minutes
+        estimatedTime: ride_time_min
       }
     });
     
