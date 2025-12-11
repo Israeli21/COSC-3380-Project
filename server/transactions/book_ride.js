@@ -68,6 +68,8 @@ router.post('/api/book-ride', async (req, res) => {
     // Combine ride_date and ride_time to create full timestamp
     const rideDateTime = `${ride_date} ${ride_time}`;
     
+    // CONCURRENCY CONTROL: Use FOR UPDATE to lock the driver row
+    // This prevents two concurrent transactions from selecting the same driver
     const availableDriverRes = await client.query(
       `SELECT DISTINCT d.driver_id, d.name
        FROM driver d
@@ -75,6 +77,7 @@ router.post('/api/book-ride', async (req, res) => {
        WHERE da.day_of_week = EXTRACT(DOW FROM $1::TIMESTAMP)::INTEGER
          AND da.start_hour <= EXTRACT(HOUR FROM $1::TIMESTAMP)::INTEGER
          AND da.end_hour > EXTRACT(HOUR FROM $1::TIMESTAMP)::INTEGER
+         AND da.is_active = TRUE
          -- Ensure driver is not already booked at this exact date and time
          AND NOT EXISTS (
            SELECT 1 FROM ride r
@@ -83,7 +86,8 @@ router.post('/api/book-ride', async (req, res) => {
              AND r.ride_time = $3::TIME
          )
        ORDER BY d.driver_id ASC
-       LIMIT 1`,
+       LIMIT 1
+       FOR UPDATE OF d SKIP LOCKED`,
       [rideDateTime, ride_date, ride_time]
     );
     

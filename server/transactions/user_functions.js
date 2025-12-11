@@ -65,23 +65,21 @@ router.post('/api/create-user', async (req, res) => {
 router.post('/api/adjust-balance', async (req, res) => {
   const client = await pool.connect();
   try {
-    const { userId, amount, operation } = req.body;
+    const { user_id, amount } = req.body;
 
-    if (!userId || amount === undefined || !operation) {
+    if (!user_id || amount === undefined) {
       return res.status(400).json({ 
         success: false, 
-        error: 'User ID, amount, and operation are required' 
+        error: 'User ID and amount are required' 
       });
     }
-
-    const adjustment = operation === 'add' ? parseFloat(amount) : -parseFloat(amount);
 
     await client.query('BEGIN');
 
     // Get current balance
     const balanceResult = await client.query(
-      'SELECT balance FROM bank_account WHERE user_id = $1',
-      [userId]
+      'SELECT balance FROM bank_account WHERE user_id = $1 AND account_type = $2',
+      [user_id, 'app_user']
     );
 
     if (balanceResult.rows.length === 0) {
@@ -93,7 +91,7 @@ router.post('/api/adjust-balance', async (req, res) => {
     }
 
     const currentBalance = parseFloat(balanceResult.rows[0].balance);
-    const newBalance = currentBalance + adjustment;
+    const newBalance = currentBalance + parseFloat(amount);
 
     if (newBalance < 0) {
       await client.query('ROLLBACK');
@@ -105,8 +103,8 @@ router.post('/api/adjust-balance', async (req, res) => {
 
     // Update balance
     await client.query(
-      'UPDATE bank_account SET balance = $1 WHERE user_id = $2',
-      [newBalance, userId]
+      'UPDATE bank_account SET balance = $1 WHERE user_id = $2 AND account_type = $3',
+      [newBalance, user_id, 'app_user']
     );
 
     await client.query('COMMIT');
